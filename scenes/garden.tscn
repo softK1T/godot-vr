@@ -1,0 +1,76 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/models/low_poly_fence/scenes/fence_straight_3m.tscn" id="1_fence"]
+[ext_resource type="PackedScene" path="res://assets/models/low_poly_fence/scenes/fence_gate_3m.tscn" id="2_gate"]
+[ext_resource type="PackedScene" path="res://assets/models/low_poly_farm_beds/scenes/farm_bed_2x1_carrots.tscn" id="3_carrots"]
+[ext_resource type="PackedScene" path="res://assets/models/low_poly_farm_beds/scenes/farm_bed_2x1_seedlings.tscn" id="4_seedlings"]
+[ext_resource type="PackedScene" path="res://assets/models/low_poly_farm_beds/scenes/farm_bed_2x1_furrows.tscn" id="5_furrows"]
+[ext_resource type="PackedScene" path="res://assets/models/low_poly_farm_beds/scenes/raised_bed_2x1.tscn" id="6_raised"]
+[ext_resource type="PackedScene" path="res://assets/models/low_poly_farm_beds/scenes/farm_path_1x1.tscn" id="7_path"]
+
+[node name="Garden" type="Node3D"]
+
+[node name="Fence" type="Node3D" parent="."]
+
+[node name="RearLeft" parent="Fence" instance=ExtResource("1_fence")]
+
+[node name="RearRight" parent="Fence" instance=ExtResource("1_fence")]
+position = Vector3(3, 0, 0)
+
+[node name="RightRear" parent="Fence" instance=ExtResource("1_fence")]
+position = Vector3(6, 0, 0)
+rotation = Vector3(0, -1.5707963, 0)
+
+[node name="RightFront" parent="Fence" instance=ExtResource("1_fence")]
+position = Vector3(6, 0, 3)
+rotation = Vector3(0, -1.5707963, 0)
+
+[node name="FrontGate" parent="Fence" instance=ExtResource("2_gate")]
+position = Vector3(6, 0, 6)
+rotation = Vector3(0, 3.1415927, 0)
+
+[node name="FrontLeft" parent="Fence" instance=ExtResource("1_fence")]
+position = Vector3(3, 0, 6)
+rotation = Vector3(0, 3.1415927, 0)
+
+[node name="LeftFront" parent="Fence" instance=ExtResource("1_fence")]
+position = Vector3(0, 0, 6)
+rotation = Vector3(0, 1.5707963, 0)
+
+[node name="LeftRear" parent="Fence" instance=ExtResource("1_fence")]
+position = Vector3(0, 0, 3)
+rotation = Vector3(0, 1.5707963, 0)
+
+[node name="Beds" type="Node3D" parent="."]
+
+[node name="CarrotBed" parent="Beds" instance=ExtResource("3_carrots")]
+position = Vector3(0.6, 0.01, 0.7)
+
+[node name="SeedlingBed" parent="Beds" instance=ExtResource("4_seedlings")]
+position = Vector3(3.4, 0.01, 0.7)
+
+[node name="FurrowBed" parent="Beds" instance=ExtResource("5_furrows")]
+position = Vector3(0.6, 0.01, 3.8)
+
+[node name="RaisedBed" parent="Beds" instance=ExtResource("6_raised")]
+position = Vector3(3.4, 0.01, 3.8)
+
+[node name="Paths" type="Node3D" parent="."]
+
+[node name="PathCenter0" parent="Paths" instance=ExtResource("7_path")]
+position = Vector3(2.5, 0.005, 0.7)
+
+[node name="PathCenter1" parent="Paths" instance=ExtResource("7_path")]
+position = Vector3(2.5, 0.005, 1.7)
+
+[node name="PathCenter2" parent="Paths" instance=ExtResource("7_path")]
+position = Vector3(2.5, 0.005, 2.7)
+
+[node name="PathCenter3" parent="Paths" instance=ExtResource("7_path")]
+position = Vector3(2.5, 0.005, 3.7)
+
+[node name="PathCenter4" parent="Paths" instance=ExtResource("7_path")]
+position = Vector3(2.5, 0.005, 4.7)
+
+[node name="PathEntrance" parent="Paths" instance=ExtResource("7_path")]
+position = Vector3(3.5, 0.005, 5.0)

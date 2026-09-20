@@ -1,0 +1,31 @@
+# Texture-free low-poly farm materials
+newmtl Soil_Dark
+Kd 0.18 0.085 0.035
+Ns 4
+newmtl Soil_Mid
+Kd 0.29 0.135 0.055
+Ns 4
+newmtl Soil_Light
+Kd 0.40 0.205 0.085
+Ns 4
+newmtl Wood_Dark
+Kd 0.27 0.135 0.055
+Ns 6
+newmtl Wood_Light
+Kd 0.48 0.275 0.105
+Ns 6
+newmtl Leaf_Dark
+Kd 0.12 0.31 0.09
+Ns 5
+newmtl Leaf_Mid
+Kd 0.22 0.49 0.13
+Ns 5
+newmtl Leaf_Light
+Kd 0.39 0.66 0.18
+Ns 5
+newmtl Carrot
+Kd 0.92 0.33 0.045
+Ns 7
+newmtl Stone
+Kd 0.34 0.32 0.28
+Ns 5

@@ -1,0 +1,214 @@
+[gd_scene format=3 uid="uid://q4n3u5d0h7wp"]
+
+[ext_resource type="PackedScene" uid="uid://bjs1nqulwn7vr" path="res://scenes/house.tscn" id="1_house"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="Script" uid="uid://q56x0deh1fe1" path="res://scripts/forest_generator.gd" id="3_forest"]
+[ext_resource type="Script" uid="uid://cy5jhe8qh4upp" path="res://scripts/atmosphere.gd" id="4_atmos"]
+[ext_resource type="PackedScene" path="res://scenes/garden.tscn" id="5_garden"]
+[ext_resource type="PackedScene" uid="uid://c0e7glie14yah" path="res://assets/external/kaykit_forest/Tree_1_A_Color1.gltf" id="10_tree1"]
+[ext_resource type="PackedScene" uid="uid://cl2fvyg0opbg1" path="res://assets/external/kaykit_forest/Tree_2_B_Color1.gltf" id="11_tree2"]
+[ext_resource type="PackedScene" uid="uid://rxq71raoug15" path="res://assets/external/kaykit_forest/Tree_3_A_Color1.gltf" id="12_tree3"]
+[ext_resource type="PackedScene" uid="uid://b4fn6xndt2ss8" path="res://assets/external/kaykit_forest/Tree_4_C_Color1.gltf" id="13_tree4"]
+[ext_resource type="PackedScene" uid="uid://uel2jfuav0q6" path="res://assets/external/kaykit_forest/Tree_Bare_1_B_Color1.gltf" id="14_tree5"]
+[ext_resource type="PackedScene" uid="uid://bpgk3ipdac2a6" path="res://assets/external/kaykit_forest/Bush_1_C_Color1.gltf" id="20_bush1"]
+[ext_resource type="PackedScene" uid="uid://bfybfetpn5wlf" path="res://assets/external/kaykit_forest/Bush_2_E_Color1.gltf" id="21_bush2"]
+[ext_resource type="PackedScene" uid="uid://kvrutiujsw6h" path="res://assets/external/kaykit_forest/Bush_4_B_Color1.gltf" id="22_bush3"]
+[ext_resource type="PackedScene" uid="uid://cswodp810vk0q" path="res://assets/external/kaykit_forest/Rock_1_H_Color1.gltf" id="30_rock1"]
+[ext_resource type="PackedScene" uid="uid://b1ngc41pm1g6b" path="res://assets/external/kaykit_forest/Rock_2_D_Color1.gltf" id="31_rock2"]
+[ext_resource type="PackedScene" uid="uid://bxkwofcqr0bl7" path="res://assets/external/kaykit_forest/Rock_3_N_Color1.gltf" id="32_rock3"]
+[ext_resource type="PackedScene" uid="uid://nm25eubordhp" path="res://assets/external/kaykit_forest/Grass_1_A_Singlesided_Color1.gltf" id="40_grass1"]
+[ext_resource type="PackedScene" uid="uid://dnjwni0c211t6" path="res://assets/external/kaykit_forest/Grass_2_C_Singlesided_Color1.gltf" id="41_grass2"]
+[ext_resource type="PackedScene" uid="uid://bg020tljdlsxk" path="res://assets/external/kaykit_forest/Grass_1_C_Singlesided_Color1.gltf" id="42_grass3"]
+[ext_resource type="PackedScene" uid="uid://x7ejstguwc8r" path="res://assets/external/kaykit_forest/Grass_2_A_Singlesided_Color1.gltf" id="43_grass4"]
+[ext_resource type="Script" uid="uid://dmrkcyri4rp1t" path="res://scripts/world_trail.gd" id="50_trail"]
+[ext_resource type="Shader" uid="uid://rtwgd68xx8ye" path="res://shaders/forest_ground.gdshader" id="51_ground_shader"]
+[ext_resource type="Script" uid="uid://f13j2rgfupw1" path="res://scripts/ground_detail.gd" id="52_ground_detail"]
+[ext_resource type="Script" path="res://scripts/low_poly_ground.gd" id="53_low_poly_ground"]
+
+[sub_resource type="ProceduralSkyMaterial" id="DaySkyMaterial"]
+sky_top_color = Color(0.08, 0.22, 0.42, 1)
+sky_horizon_color = Color(0.78, 0.54, 0.29, 1)
+ground_bottom_color = Color(0.025, 0.035, 0.028, 1)
+ground_horizon_color = Color(0.48, 0.37, 0.23, 1)
+sun_angle_max = 18.0
+sun_curve = 0.07
+
+[sub_resource type="Sky" id="DaySky"]
+sky_material = SubResource("DaySkyMaterial")
+
+[sub_resource type="Environment" id="Env"]
+background_mode = 2
+background_energy_multiplier = 0.85
+sky = SubResource("DaySky")
+ambient_light_source = 3
+ambient_light_color = Color(0.68, 0.76, 0.86, 1)
+ambient_light_energy = 0.52
+reflected_light_source = 2
+tonemap_mode = 2
+glow_enabled = true
+glow_normalized = true
+glow_intensity = 0.35
+glow_strength = 0.65
+glow_bloom = 0.08
+glow_hdr_threshold = 1.15
+glow_hdr_scale = 1.6
+fog_enabled = true
+fog_light_color = Color(0.27, 0.34, 0.31, 1)
+fog_light_energy = 0.7
+fog_sun_scatter = 0.2
+fog_density = 0.026
+fog_aerial_perspective = 0.55
+fog_sky_affect = 0.65
+fog_height = 1.6
+fog_height_density = 0.28
+fog_depth_curve = 1.15
+fog_depth_begin = 8.0
+fog_depth_end = 115.0
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.038
+volumetric_fog_albedo = Color(0.62, 0.72, 0.67, 1)
+volumetric_fog_emission = Color(0.006, 0.009, 0.007, 1)
+volumetric_fog_emission_energy = 0.25
+volumetric_fog_gi_inject = 0.8
+volumetric_fog_anisotropy = 0.62
+volumetric_fog_length = 72.0
+volumetric_fog_detail_spread = 2.2
+volumetric_fog_ambient_inject = 0.18
+volumetric_fog_sky_affect = 0.12
+volumetric_fog_temporal_reprojection_amount = 0.88
+adjustment_enabled = true
+adjustment_brightness = 0.96
+adjustment_contrast = 1.08
+adjustment_saturation = 1.02
+
+[sub_resource type="ParticleProcessMaterial" id="MoteProcess"]
+emission_shape = 3
+emission_box_extents = Vector3(20, 4, 20)
+direction = Vector3(0.12, 1, 0.08)
+spread = 180.0
+initial_velocity_min = 0.015
+initial_velocity_max = 0.07
+gravity = Vector3(0, 0.006, 0)
+scale_min = 0.35
+scale_max = 1.4
+color = Color(0.7, 0.8, 0.66, 0.32)
+
+[sub_resource type="StandardMaterial3D" id="MoteMaterial"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.72, 0.82, 0.68, 0.38)
+billboard_mode = 1
+
+[sub_resource type="QuadMesh" id="MoteMesh"]
+material = SubResource("MoteMaterial")
+size = Vector2(0.025, 0.025)
+
+[sub_resource type="ParticleProcessMaterial" id="FireflyProcess"]
+emission_shape = 3
+emission_box_extents = Vector3(13, 2.3, 13)
+direction = Vector3(0, 1, 0)
+spread = 180.0
+initial_velocity_min = 0.025
+initial_velocity_max = 0.11
+gravity = Vector3(0, 0, 0)
+scale_min = 0.45
+scale_max = 1.3
+color = Color(0.65, 1, 0.3, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="FireflyMaterial"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.72, 1, 0.36, 0.85)
+billboard_mode = 1
+
+[sub_resource type="QuadMesh" id="FireflyMesh"]
+material = SubResource("FireflyMaterial")
+size = Vector2(0.045, 0.045)
+
+[sub_resource type="StandardMaterial3D" id="GroundMat"]
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+metallic_specular = 0.1
+cull_mode = 2
+
+[sub_resource type="WorldBoundaryShape3D" id="GroundShape"]
+
+[node name="Main" type="Node3D" unique_id=647049624]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=749196428]
+environment = SubResource("Env")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1498824779]
+transform = Transform3D(0.927184, 0.223237, -0.300925, 0, 0.803857, 0.594823, 0.374225, -0.55151, 0.745322, 0, 0, 0)
+light_color = Color(1, 0.835, 0.62, 1)
+light_energy = 1.35
+light_indirect_energy = 0.0
+light_volumetric_fog_energy = 0.0
+light_angular_distance = 0.53
+light_cull_mask = 1
+shadow_enabled = true
+shadow_bias = 0.018
+shadow_normal_bias = 0.28
+shadow_blur = 0.55
+directional_shadow_blend_splits = true
+directional_shadow_fade_start = 0.55
+directional_shadow_max_distance = 42.0
+
+[node name="Atmosphere" type="Node" parent="." unique_id=2043704434]
+script = ExtResource("4_atmos")
+
+[node name="DriftingMotes" type="GPUParticles3D" parent="." unique_id=601919872]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -2)
+amount = 110
+lifetime = 18.0
+randomness = 0.8
+visibility_aabb = AABB(-22, -5, -22, 44, 10, 44)
+process_material = SubResource("MoteProcess")
+draw_pass_1 = SubResource("MoteMesh")
+
+[node name="Fireflies" type="GPUParticles3D" parent="." unique_id=265937834]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, -2)
+amount = 24
+lifetime = 9.0
+randomness = 1.0
+visibility_aabb = AABB(-15, -3, -15, 30, 7, 30)
+process_material = SubResource("FireflyProcess")
+draw_pass_1 = SubResource("FireflyMesh")
+
+[node name="Trail" type="Node3D" parent="." unique_id=1248745905]
+script = ExtResource("50_trail")
+path_width = 1.2000000000000002
+edge_stone_count = 54
+
+[node name="GroundDetail" type="Node3D" parent="." unique_id=1354884673]
+script = ExtResource("52_ground_detail")
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=529845258]
+script = ExtResource("53_low_poly_ground")
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground" unique_id=2032955717]
+material_override = SubResource("GroundMat")
+cast_shadow = 1
+
+[node name="Collision" type="CollisionShape3D" parent="Ground" unique_id=1339716091]
+visible = false
+shape = SubResource("GroundShape")
+
+[node name="Forest" type="Node3D" parent="." unique_id=2130205384]
+script = ExtResource("3_forest")
+tree_scenes = Array[PackedScene]([ExtResource("10_tree1"), ExtResource("11_tree2"), ExtResource("12_tree3"), ExtResource("13_tree4"), ExtResource("14_tree5")])
+bush_scenes = Array[PackedScene]([ExtResource("20_bush1"), ExtResource("21_bush2"), ExtResource("22_bush3")])
+rock_scenes = Array[PackedScene]([ExtResource("30_rock1"), ExtResource("31_rock2"), ExtResource("32_rock3")])
+grass_scenes = Array[PackedScene]([ExtResource("40_grass1"), ExtResource("41_grass2"), ExtResource("42_grass3"), ExtResource("43_grass4")])
+
+[node name="Garden" parent="." unique_id=1267856265 instance=ExtResource("5_garden")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 0, -7)
+
+[node name="House" parent="." unique_id=754510079 instance=ExtResource("1_house")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
+
+[node name="Player" parent="." unique_id=925689285 instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 13)

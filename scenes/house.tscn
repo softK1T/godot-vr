@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://bjs1nqulwn7vr"]
+
+[ext_resource type="PackedScene" uid="uid://cqggrg3kfyxiy" path="res://assets/external/scandinavian_cabin/scandinavian_log_cabin.glb" id="1_cabin"]
+[ext_resource type="Script" uid="uid://bo4rdueif3g7b" path="res://scripts/cabin_collision.gd" id="2_collision"]
+
+[sub_resource type="BoxShape3D" id="StairRampShape"]
+size = Vector3(2.8687987, 0.14, 1.8)
+
+[node name="House" type="Node3D" unique_id=487698179]
+script = ExtResource("2_collision")
+
+[node name="CabinModel" parent="." unique_id=1482562891 instance=ExtResource("1_cabin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 1.06, 0.1)
+
+[node name="StairWalkRamp" type="StaticBody3D" parent="." unique_id=169943249]
+
+[node name="Collision" type="CollisionShape3D" parent="StairWalkRamp" unique_id=2013019017]
+transform = Transform3D(0.8015223, 0.5978609, -0.011153288, -0.59795463, 0.8014785, -0.009084593, 0.0035078013, 0.013950662, 0.9998965, 3.7760472, 0.26708204, 4.0499773)
+shape = SubResource("StairRampShape")
+
+[node name="InteriorWarmth" type="OmniLight3D" parent="." unique_id=1512916293]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.20872548, 2.35, 0.5)
+light_color = Color(1, 0.5, 0.22, 1)
+light_energy = 0.0
+light_volumetric_fog_energy = 0.0
+light_cull_mask = 2
+shadow_enabled = true
+shadow_bias = 0.03
+shadow_normal_bias = 0.35
+shadow_blur = 0.6
+omni_range = 6.0
+
+[node name="PorchLight" type="OmniLight3D" parent="." unique_id=259911357]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 2.65, 3.5)
+light_color = Color(1, 0.72, 0.42, 1)
+light_energy = 1.35
+light_volumetric_fog_energy = 0.0
+light_cull_mask = 3
+shadow_enabled = true
+shadow_bias = 0.035
+shadow_normal_bias = 0.4
+shadow_blur = 0.7
+omni_range = 6.0

@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cu5d8vkgsrjxc"
+path="res://.godot/imported/raised_bed_2x1.obj-ec3773844407a3a204088aa933356fca.mesh"
+
+[deps]
+
+files=["res://.godot/imported/raised_bed_2x1.obj-ec3773844407a3a204088aa933356fca.mesh"]
+
+source_file="res://assets/models/low_poly_farm_beds/raised_bed_2x1.obj"
+dest_files=["res://.godot/imported/raised_bed_2x1.obj-ec3773844407a3a204088aa933356fca.mesh", "res://.godot/imported/raised_bed_2x1.obj-ec3773844407a3a204088aa933356fca.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

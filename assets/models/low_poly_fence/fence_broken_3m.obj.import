@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://b6s6fwm8q41of"
+path="res://.godot/imported/fence_broken_3m.obj-f3fffff6730f69d121af30255cb5be9d.mesh"
+
+[deps]
+
+files=["res://.godot/imported/fence_broken_3m.obj-f3fffff6730f69d121af30255cb5be9d.mesh"]
+
+source_file="res://assets/models/low_poly_fence/fence_broken_3m.obj"
+dest_files=["res://.godot/imported/fence_broken_3m.obj-f3fffff6730f69d121af30255cb5be9d.mesh", "res://.godot/imported/fence_broken_3m.obj-f3fffff6730f69d121af30255cb5be9d.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
