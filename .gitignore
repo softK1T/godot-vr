@@ -4,3 +4,4 @@
 assets/source/
 *.blend
 *.zip
+.godot-test-home/

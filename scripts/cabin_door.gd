@@ -1,6 +1,6 @@
 extends AnimatableBody3D
 
-@export var open_angle_degrees: float = 105.0
+@export var open_angle_degrees: float = -105.0
 @export var open_speed: float = 4.0
 
 var _closed_rotation_y: float
