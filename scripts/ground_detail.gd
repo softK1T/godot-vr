@@ -7,18 +7,18 @@ class_name GroundDetail
 		rebuild = false
 		if value: build()
 @export_category("Ground")
-@export_range(0, 300, 1) var moss_count := 135
-@export_range(0, 220, 1) var pebble_count := 85
-@export_range(0, 300, 1) var leaf_count := 150
-@export_range(0, 180, 1) var twig_count := 80
+@export_range(0, 300, 1) var moss_count := 0
+@export_range(0, 220, 1) var pebble_count := 0
+@export_range(0, 300, 1) var leaf_count := 0
+@export_range(0, 180, 1) var twig_count := 0
 @export_category("Vegetation")
-@export_range(0, 900, 1) var grass_count := 520
-@export_range(0, 160, 1) var bush_count := 58
+@export_range(0, 900, 1) var grass_count := 0
+@export_range(0, 160, 1) var bush_count := 0
 @export var seed_value := 421906
 var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
-	if get_child_count() == 0: build()
+	if get_child_count() == 0: call_deferred("build")
 
 func build() -> void:
 	for child in get_children(): child.free()
@@ -120,6 +120,12 @@ func _ground_transforms(count: int,inner: float,outer: float,clearance: float,he
 		var basis:=Basis(Vector3.UP,_rng.randf_range(-PI,PI)).scaled(Vector3(_rng.randf_range(xz.x,xz.y),_rng.randf_range(y_scale.x,y_scale.y),_rng.randf_range(xz.x,xz.y)))
 		output.append(Transform3D(basis,Vector3(p.x,height,p.y)))
 	return output
+
+func _terrain_height(p: Vector2) -> float:
+	var ground := get_node_or_null("../Ground")
+	if ground and ground.has_method("sample_height"):
+		return float(ground.call("surface_height", p))
+	return 0.0
 
 func _noise_hash(p: Vector2) -> float: return fposmod(sin(p.dot(Vector2(127.1,311.7)))*43758.5453,1.0)
 func _random_position(inner: float,outer: float) -> Vector2:

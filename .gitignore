@@ -1,3 +1,6 @@
 .DS_Store
 .godot/
 
+assets/source/
+*.blend
+*.zip

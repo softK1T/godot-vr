@@ -6,7 +6,11 @@
 [ext_resource type="PackedScene" path="res://assets/models/low_poly_farm_beds/scenes/farm_bed_2x1_seedlings.tscn" id="4_seedlings"]
 [ext_resource type="PackedScene" path="res://assets/models/low_poly_farm_beds/scenes/farm_bed_2x1_furrows.tscn" id="5_furrows"]
 [ext_resource type="PackedScene" path="res://assets/models/low_poly_farm_beds/scenes/raised_bed_2x1.tscn" id="6_raised"]
-[ext_resource type="PackedScene" path="res://assets/models/low_poly_farm_beds/scenes/farm_path_1x1.tscn" id="7_path"]
+[ext_resource type="Script" path="res://scripts/crop_plot.gd" id="8_crop"]
+[ext_resource type="Script" path="res://scripts/crop_interaction.gd" id="9_crop_area"]
+
+[sub_resource type="BoxShape3D" id="CropInteractionShape"]
+size = Vector3(2.2, 0.7, 1.55)
 
 [node name="Garden" type="Node3D"]
 
@@ -51,26 +55,32 @@ position = Vector3(3.4, 0.01, 0.7)
 
 [node name="FurrowBed" parent="Beds" instance=ExtResource("5_furrows")]
 position = Vector3(0.6, 0.01, 3.8)
+script = ExtResource("8_crop")
+crop_name = "Carrots"
+growth_seconds = 80.0
+harvest_amount = 5
 
 [node name="RaisedBed" parent="Beds" instance=ExtResource("6_raised")]
 position = Vector3(3.4, 0.01, 3.8)
+script = ExtResource("8_crop")
+crop_name = "Turnips"
+growth_seconds = 105.0
+harvest_amount = 6
 
-[node name="Paths" type="Node3D" parent="."]
+[node name="CarrotInteraction" type="Area3D" parent="Beds/FurrowBed"]
+position = Vector3(1, 0.35, 0.5)
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("9_crop_area")
 
-[node name="PathCenter0" parent="Paths" instance=ExtResource("7_path")]
-position = Vector3(2.5, 0.005, 0.7)
+[node name="Collision" type="CollisionShape3D" parent="Beds/FurrowBed/CarrotInteraction"]
+shape = SubResource("CropInteractionShape")
 
-[node name="PathCenter1" parent="Paths" instance=ExtResource("7_path")]
-position = Vector3(2.5, 0.005, 1.7)
+[node name="TurnipInteraction" type="Area3D" parent="Beds/RaisedBed"]
+position = Vector3(1, 0.35, 0.5)
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("9_crop_area")
 
-[node name="PathCenter2" parent="Paths" instance=ExtResource("7_path")]
-position = Vector3(2.5, 0.005, 2.7)
-
-[node name="PathCenter3" parent="Paths" instance=ExtResource("7_path")]
-position = Vector3(2.5, 0.005, 3.7)
-
-[node name="PathCenter4" parent="Paths" instance=ExtResource("7_path")]
-position = Vector3(2.5, 0.005, 4.7)
-
-[node name="PathEntrance" parent="Paths" instance=ExtResource("7_path")]
-position = Vector3(3.5, 0.005, 5.0)
+[node name="Collision" type="CollisionShape3D" parent="Beds/RaisedBed/TurnipInteraction"]
+shape = SubResource("CropInteractionShape")

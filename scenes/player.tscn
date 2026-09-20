@@ -47,7 +47,7 @@ distance_fade_shadow = 18.0
 
 [node name="InteractionRay" type="RayCast3D" parent="CamPivot/Camera3D"]
 target_position = Vector3(0, 0, -3.2)
-collision_mask = 1
+collision_mask = 3
 collide_with_areas = true
 
 [node name="HUD" type="CanvasLayer" parent="."]
@@ -85,3 +85,131 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 22
+
+
+[node name="TopBar" type="PanelContainer" parent="HUD"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -110.0
+offset_top = 20.0
+offset_right = 110.0
+offset_bottom = 59.0
+modulate = Color(0.85, 0.9, 0.75, 0.92)
+
+[node name="Clock" type="Label" parent="HUD/TopBar"]
+text = "DAY 1   07:30"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(0.12, 0.16, 0.1, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="SurvivalPanel" type="PanelContainer" parent="HUD"]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 248.0
+offset_bottom = 274.0
+modulate = Color(0.9, 0.92, 0.82, 0.94)
+
+[node name="Margin" type="MarginContainer" parent="HUD/SurvivalPanel"]
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="HUD/SurvivalPanel/Margin"]
+theme_override_constants/separation = 5
+
+[node name="Title" type="Label" parent="HUD/SurvivalPanel/Margin/VBox"]
+text = "CABIN SURVIVAL"
+theme_override_colors/font_color = Color(0.18, 0.24, 0.12, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="HealthText" type="Label" parent="HUD/SurvivalPanel/Margin/VBox"]
+text = "HEALTH"
+theme_override_colors/font_color = Color(0.26, 0.18, 0.12, 1)
+
+[node name="Health" type="ProgressBar" parent="HUD/SurvivalPanel/Margin/VBox"]
+custom_minimum_size = Vector2(190, 10)
+value = 100.0
+show_percentage = false
+modulate = Color(0.9, 0.28, 0.22, 1)
+
+[node name="HungerText" type="Label" parent="HUD/SurvivalPanel/Margin/VBox"]
+text = "HUNGER"
+theme_override_colors/font_color = Color(0.26, 0.18, 0.12, 1)
+
+[node name="Hunger" type="ProgressBar" parent="HUD/SurvivalPanel/Margin/VBox"]
+custom_minimum_size = Vector2(190, 10)
+value = 82.0
+show_percentage = false
+modulate = Color(0.94, 0.62, 0.18, 1)
+
+[node name="WarmthText" type="Label" parent="HUD/SurvivalPanel/Margin/VBox"]
+text = "WARMTH"
+theme_override_colors/font_color = Color(0.26, 0.18, 0.12, 1)
+
+[node name="Warmth" type="ProgressBar" parent="HUD/SurvivalPanel/Margin/VBox"]
+custom_minimum_size = Vector2(190, 10)
+value = 78.0
+show_percentage = false
+modulate = Color(1, 0.36, 0.12, 1)
+
+[node name="StaminaText" type="Label" parent="HUD/SurvivalPanel/Margin/VBox"]
+text = "STAMINA"
+theme_override_colors/font_color = Color(0.26, 0.18, 0.12, 1)
+
+[node name="Stamina" type="ProgressBar" parent="HUD/SurvivalPanel/Margin/VBox"]
+custom_minimum_size = Vector2(190, 10)
+value = 100.0
+show_percentage = false
+modulate = Color(0.32, 0.68, 0.38, 1)
+
+[node name="Inventory" type="Label" parent="HUD/SurvivalPanel/Margin/VBox"]
+text = "WOOD  2\nFOOD  1\nSEEDS 4"
+theme_override_colors/font_color = Color(0.15, 0.18, 0.12, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="ObjectivePanel" type="PanelContainer" parent="HUD"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -304.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 145.0
+modulate = Color(0.9, 0.92, 0.82, 0.92)
+
+[node name="Margin" type="MarginContainer" parent="HUD/ObjectivePanel"]
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="HUD/ObjectivePanel/Margin"]
+
+[node name="Objective" type="Label" parent="HUD/ObjectivePanel/Margin/VBox"]
+text = "SURVIVE THE EVENING\n• Gather 6 wood\n• Grow vegetables\n• Light the cabin stove"
+theme_override_colors/font_color = Color(0.15, 0.2, 0.1, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="Controls" type="Label" parent="HUD/ObjectivePanel/Margin/VBox"]
+text = "E interact   F eat   Shift sprint"
+theme_override_colors/font_color = Color(0.34, 0.37, 0.28, 1)
+theme_override_font_sizes/font_size = 12
+
+[node name="Notification" type="Label" parent="HUD"]
+visible = false
+anchor_left = 0.5
+anchor_top = 0.16
+anchor_right = 0.5
+anchor_bottom = 0.16
+offset_left = -320.0
+offset_top = -24.0
+offset_right = 320.0
+offset_bottom = 24.0
+text = "Resource collected"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.95)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 20

@@ -47,26 +47,13 @@ func build() -> void:
 		child.free()
 	_rng.seed = seed_value
 
-	var dirt := StandardMaterial3D.new()
-	dirt.albedo_color = Color(0.155, 0.103, 0.057, 1.0)
-	dirt.roughness = 1.0
-
-	var worn_dirt := StandardMaterial3D.new()
-	worn_dirt.albedo_color = Color(0.225, 0.155, 0.088, 1.0)
-	worn_dirt.roughness = 1.0
-
 	var stone := StandardMaterial3D.new()
 	stone.albedo_color = Color(0.285, 0.29, 0.25, 1.0)
 	stone.roughness = 0.98
 
 	var main_curve := _sample_curve(main_route, samples_per_segment)
 	var garden_curve := _sample_curve(garden_route, samples_per_segment)
-	_add_ribbon("MainDirt", main_curve, path_width, dirt, 0.018, 0.08)
-	_add_ribbon("MainWornCenter", main_curve, path_width * 0.38, worn_dirt, 0.024, 0.035)
-	_add_ribbon("GardenDirt", garden_curve, path_width * 0.88, dirt, 0.019, 0.07)
-	_add_ribbon("GardenWornCenter", garden_curve, path_width * 0.31, worn_dirt, 0.025, 0.03)
 	_add_edge_stones([main_curve, garden_curve], stone)
-	_add_dirt_patches([main_curve, garden_curve], worn_dirt)
 
 func _sample_curve(control: PackedVector3Array, resolution: int) -> PackedVector3Array:
 	var result := PackedVector3Array()

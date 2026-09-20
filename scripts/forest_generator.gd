@@ -19,11 +19,15 @@ class_name ForestGenerator
 @export var grass_scenes: Array[PackedScene] = []
 
 @export_category("Clearing detail")
+@export var clearing_tree_count: int = 16
 @export var clearing_bush_count: int = 10
 @export var clearing_rock_count: int = 45
 @export var clearing_grass_count: int = 180
 
 var _rng := RandomNumberGenerator.new()
+# Shared exclusion map for every tree, bush, and rock, including clearing passes.
+# Vector3 stores world X/Z in x/z and the reserved radius in y.
+var _occupied: Array[Vector3] = []
 
 func _set_regenerate(v: bool) -> void:
 	regenerate = false
@@ -32,21 +36,101 @@ func _set_regenerate(v: bool) -> void:
 
 func _ready() -> void:
 	if not Engine.is_editor_hint() and get_child_count() == 0:
-		build()
+		call_deferred("build")
 
 func build() -> void:
 	for child in get_children():
 		child.free()
 	_rng.seed = seed_value
-	_scatter(tree_scenes, tree_count, clearing_radius, radius, Vector2(0.9, 1.65), "tree")
-	_scatter(bush_scenes, bush_count, clearing_radius - 1.0, radius * 0.92, Vector2(0.75, 1.45), "none")
-	_scatter(rock_scenes, rock_count, clearing_radius - 2.0, radius * 0.86, Vector2(0.7, 1.8), "rock")
+	_occupied.clear()
+	# Seed the former yard first so it cannot be starved by the wider forest passes.
+	_scatter_left_of_house()
+	_scatter_clearing(tree_scenes, clearing_tree_count, 4.2, clearing_radius + 2.0, Vector2(0.72, 1.15), "Trees", "tree")
+	_scatter_clearing(rock_scenes, clearing_rock_count, 2.0, clearing_radius - 0.5, Vector2(0.38, 0.85), "Rocks", "rock")
+	_scatter_clearing(bush_scenes, clearing_bush_count, 2.2, clearing_radius - 0.8, Vector2(0.55, 1.0), "Bushes", "bush")
+	# Then fill the whole map. Every pass uses the same occupied-position map.
+	_scatter(tree_scenes, tree_count, 0.0, radius, Vector2(0.9, 1.65), "tree")
+	_scatter(bush_scenes, bush_count, 0.0, radius * 0.92, Vector2(0.75, 1.45), "bush")
+	_scatter(rock_scenes, rock_count, 0.0, radius * 0.86, Vector2(0.7, 1.8), "rock")
 	_scatter(grass_scenes, grass_count, clearing_radius - 4.0, radius * 0.72, Vector2(0.65, 1.35), "none")
-	_scatter_clearing(bush_scenes, clearing_bush_count, 5.8, clearing_radius - 0.8, Vector2(0.55, 1.0), "Bushes", false)
-	_scatter_clearing(rock_scenes, clearing_rock_count, 4.8, clearing_radius - 0.5, Vector2(0.38, 0.85), "Rocks", true)
-	_scatter_clearing(grass_scenes, clearing_grass_count, 3.8, clearing_radius + 2.0, Vector2(0.35, 0.95), "Grass", false)
+	_scatter_clearing(grass_scenes, clearing_grass_count, 3.8, clearing_radius + 2.0, Vector2(0.35, 0.95), "Grass", "none")
 
-func _scatter_clearing(library: Array[PackedScene], count: int, inner: float, outer: float, scale_range: Vector2, group_name: String, add_rock_collision: bool = false) -> void:
+
+func _scatter_left_of_house() -> void:
+	# The old garden reservation leaves an obvious visual hole west of the cabin.
+	# Fill its outer/west side deliberately before random world scatter begins.
+	var root := Node3D.new()
+	root.name = "DenseWestSide"
+	add_child(root)
+	root.owner = owner
+	var specifications := [
+		[tree_scenes, 24, "tree", Vector2(0.72, 1.18)],
+		[bush_scenes, 38, "bush", Vector2(0.62, 1.15)],
+		[rock_scenes, 30, "rock", Vector2(0.48, 1.12)],
+	]
+	for specification in specifications:
+		var library: Array = specification[0]
+		var wanted: int = specification[1]
+		var kind: String = specification[2]
+		var scale_range: Vector2 = specification[3]
+		if library.is_empty():
+			continue
+		var placed := 0
+		var attempts := 0
+		while placed < wanted and attempts < wanted * 55:
+			attempts += 1
+			var pos := Vector3(_rng.randf_range(-23.0, -5.6), 0.0, _rng.randf_range(-11.5, 7.5))
+			# Preserve the physical garden itself, but not the broad region around it.
+			if pos.x > -12.0 and pos.x < -4.0 and pos.z > -8.0 and pos.z < 0.0:
+				continue
+			if pos.x > -5.8 and pos.z > -8.4 and pos.z < 0.8:
+				continue
+			var spacing := _spacing_radius(kind, scale_range) * 0.74
+			if not _has_spacing(pos, spacing):
+				continue
+			var scene: PackedScene = library[_rng.randi_range(0, library.size() - 1)]
+			if scene == null:
+				continue
+			var visual := scene.instantiate() as Node3D
+			if visual == null:
+				continue
+			var item := _create_harvestable(visual, kind)
+			item.position = pos
+			item.rotation.y = _rng.randf() * TAU
+			var scale_factor := _rng.randf_range(scale_range.x, scale_range.y)
+			item.scale = Vector3(scale_factor, scale_factor * _rng.randf_range(0.88, 1.14), scale_factor)
+			_configure_visibility(visual, kind == "tree", 48.0)
+			root.add_child(item)
+			_plant_on_surface(item, pos, kind, scale_factor)
+			item.owner = owner
+			_set_owner_recursive(item)
+			_add_harvest_collision(item, visual, kind, scale_factor)
+			_reserve_position(pos, spacing)
+			placed += 1
+
+func _terrain_height(pos: Vector3) -> float:
+	var ground := get_node_or_null("../Ground")
+	if ground and ground.has_method("surface_height"):
+		return float(ground.call("surface_height", Vector2(pos.x, pos.z)))
+	return 0.0
+
+func _plant_on_surface(item: Node3D, pos: Vector3, kind: String, scale_factor: float) -> void:
+	# Sample the actual terrain collision under the centre and around the base.
+	# The lowest contact wins, so a trunk on a polygon edge cannot hang in air.
+	var radius := (0.28 if kind == "tree" else (0.22 if kind == "bush" else 0.34)) * scale_factor
+	var samples := PackedVector2Array([
+		Vector2.ZERO, Vector2(radius, 0.0), Vector2(-radius, 0.0),
+		Vector2(0.0, radius), Vector2(0.0, -radius),
+		Vector2(radius * 0.7, radius * 0.7), Vector2(-radius * 0.7, radius * 0.7),
+		Vector2(radius * 0.7, -radius * 0.7), Vector2(-radius * 0.7, -radius * 0.7),
+	])
+	var lowest := INF
+	for offset in samples:
+		lowest = minf(lowest, _terrain_height(Vector3(pos.x + offset.x, 0.0, pos.z + offset.y)))
+	var burial := (0.24 if kind == "tree" else (0.11 if kind == "bush" else 0.16)) * scale_factor
+	item.position = Vector3(pos.x, lowest - burial, pos.z)
+
+func _scatter_clearing(library: Array[PackedScene], count: int, inner: float, outer: float, scale_range: Vector2, group_name: String, kind: String) -> void:
 	if library.is_empty():
 		return
 	var root := Node3D.new()
@@ -60,33 +144,33 @@ func _scatter_clearing(library: Array[PackedScene], count: int, inner: float, ou
 		var angle := _rng.randf() * TAU
 		var distance := sqrt(_rng.randf_range(inner * inner, outer * outer))
 		var pos := Vector3(cos(angle) * distance, 0.0, sin(angle) * distance)
-		var trail_clearance := 3.2 if add_rock_collision else 1.25
-		if _is_near_world_trail(pos, trail_clearance):
-			continue
-		# Keep the approach, porch, stairs, and immediate cabin footprint clear.
-		if absf(pos.x) < 2.2 and pos.z > -1.5 and pos.z < 15.5:
-			continue
-		if absf(pos.x) < 5.2 and pos.z > -8.2 and pos.z < 2.8:
+		# Protect only the cabin mesh itself, not the yard around it.
+		if pos.x > -4.95 and pos.x < 5.35 and pos.z > -8.05 and pos.z < 0.45:
 			continue
 		# Keep the fenced garden at world X -11..-5, Z -7..-1 clear.
 		if pos.x > -12.0 and pos.x < -4.0 and pos.z > -8.0 and pos.z < 0.0:
 			continue
+		var spacing := _spacing_radius(kind, scale_range)
+		if not _has_spacing(pos, spacing):
+			continue
 		var scene := library[_rng.randi_range(0, library.size() - 1)]
 		if scene == null:
 			continue
-		var item := scene.instantiate() as Node3D
-		if item == null:
+		var visual := scene.instantiate() as Node3D
+		if visual == null:
 			continue
+		var item := _create_harvestable(visual, kind)
 		item.position = pos
 		item.rotation.y = _rng.randf() * TAU
 		var scale_factor := _rng.randf_range(scale_range.x, scale_range.y)
 		item.scale = Vector3(scale_factor, scale_factor * _rng.randf_range(0.86, 1.12), scale_factor)
-		_configure_visibility(item, false, outer + 24.0)
+		_configure_visibility(visual, kind == "tree", outer + 24.0)
 		root.add_child(item)
+		_plant_on_surface(item, pos, kind, scale_factor)
 		item.owner = owner
 		_set_owner_recursive(item)
-		if add_rock_collision:
-			_add_rock_collision(item)
+		_add_harvest_collision(item, visual, kind, scale_factor)
+		_reserve_position(pos, spacing)
 		placed += 1
 
 func _scatter(library: Array[PackedScene], count: int, inner: float, outer: float, scale_range: Vector2, collision_type: String) -> void:
@@ -101,33 +185,55 @@ func _scatter(library: Array[PackedScene], count: int, inner: float, outer: floa
 		if distance < inner:
 			continue
 		var pos := Vector3(cos(angle) * distance, 0.0, sin(angle) * distance)
-		var trail_clearance := 3.2 if collision_type == "rock" else 1.55
-		if _is_near_world_trail(pos, trail_clearance):
+		# Protect only the cabin mesh itself; the former empty yard is available.
+		if pos.x > -4.95 and pos.x < 5.35 and pos.z > -8.05 and pos.z < 0.45:
 			continue
-		if absf(pos.x) < 2.6 and pos.z > -7.0 and pos.z < 14.0:
+		# Keep only a tiny spawn pocket so the player cannot begin inside a trunk or rock.
+		if Vector2(pos.x, pos.z).distance_to(Vector2(0.0, 13.0)) < 1.35:
 			continue
 		# Keep the fenced garden at world X -11..-5, Z -7..-1 clear.
 		if pos.x > -12.0 and pos.x < -4.0 and pos.z > -8.0 and pos.z < 0.0:
 			continue
+		var spacing := _spacing_radius(collision_type, scale_range)
+		if not _has_spacing(pos, spacing):
+			continue
 		var scene := library[_rng.randi_range(0, library.size() - 1)]
 		if scene == null:
 			continue
-		var item := scene.instantiate() as Node3D
-		if item == null:
+		var visual := scene.instantiate() as Node3D
+		if visual == null:
 			continue
+		var item := _create_harvestable(visual, collision_type)
 		item.position = pos
 		item.rotation.y = _rng.randf() * TAU
 		var s := _rng.randf_range(scale_range.x, scale_range.y)
 		item.scale = Vector3(s, s * _rng.randf_range(0.9, 1.12), s)
-		_configure_visibility(item, collision_type == "tree", outer)
+		_configure_visibility(visual, collision_type == "tree", outer)
 		add_child(item)
+		_plant_on_surface(item, pos, collision_type, s)
 		item.owner = owner
 		_set_owner_recursive(item)
-		if collision_type == "tree":
-			_add_trunk_collision(item, s)
-		elif collision_type == "rock":
-			_add_rock_collision(item)
+		_add_harvest_collision(item, visual, collision_type, s)
+		_reserve_position(pos, spacing)
 		placed += 1
+
+func _spacing_radius(kind: String, scale_range: Vector2) -> float:
+	var average_scale := (scale_range.x + scale_range.y) * 0.5
+	match kind:
+		"tree": return 1.15 + average_scale * 0.38
+		"rock": return 0.72 + average_scale * 0.24
+		"bush": return 0.62 + average_scale * 0.22
+		_: return 0.35
+
+func _has_spacing(pos: Vector3, radius_value: float) -> bool:
+	var flat := Vector2(pos.x, pos.z)
+	for occupied in _occupied:
+		if flat.distance_to(Vector2(occupied.x, occupied.z)) < radius_value + occupied.y:
+			return false
+	return true
+
+func _reserve_position(pos: Vector3, radius_value: float) -> void:
+	_occupied.append(Vector3(pos.x, radius_value, pos.z))
 
 func _is_near_world_trail(point: Vector3, clearance: float) -> bool:
 	var main_route := PackedVector3Array([
@@ -165,42 +271,55 @@ func _configure_visibility(item: Node3D, is_tree: bool, scatter_radius: float) -
 		geometry.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
 		geometry.lod_bias = 0.65 if is_tree else 0.5
 
-func _add_trunk_collision(item: Node3D, scale_factor: float) -> void:
-	var body := StaticBody3D.new()
-	body.name = "TrunkCollision"
-	var collision := CollisionShape3D.new()
-	var shape := CylinderShape3D.new()
-	shape.radius = 0.28 / maxf(scale_factor, 0.01)
-	shape.height = 4.2 / maxf(item.scale.y, 0.01)
-	collision.shape = shape
-	collision.position.y = shape.height * 0.5
-	body.add_child(collision)
-	item.add_child(body)
-	body.owner = owner
-	collision.owner = owner
+func _create_harvestable(visual: Node3D, kind: String) -> Node3D:
+	if kind not in ["tree", "rock", "bush"]:
+		return visual
+	var body := HarvestableResource.new()
+	body.name = "%sResource" % kind.capitalize()
+	body.resource_kind = "stone" if kind == "rock" else kind
+	body.amount = 4 if kind == "tree" else (3 if kind == "rock" else 2)
+	body.hits_required = 5 if kind == "tree" else (4 if kind == "rock" else 2)
+	body.respawn_seconds = 240.0 if kind == "tree" else 190.0
+	# Bushes stay ray-interactable on layer 2, but never block the player.
+	if kind == "bush":
+		body.collision_layer = 2
+		body.collision_mask = 0
+	body.add_child(visual)
+	return body
 
-func _add_rock_collision(item: Node3D) -> void:
-	var body := StaticBody3D.new()
-	body.name = "RockCollision"
-	item.add_child(body)
-	body.owner = owner
-	var shape_count := 0
-	for node in item.find_children("*", "MeshInstance3D", true, false):
-		var mesh_instance := node as MeshInstance3D
-		if mesh_instance.mesh == null:
-			continue
-		var shape := mesh_instance.mesh.create_convex_shape(true, true)
-		if shape == null:
-			continue
+func _add_harvest_collision(body: Node3D, visual: Node3D, kind: String, scale_factor: float) -> void:
+	if body == visual or not body is CollisionObject3D:
+		return
+	if kind == "tree":
 		var collision := CollisionShape3D.new()
-		collision.name = "RockShape_%02d" % shape_count
+		var shape := CylinderShape3D.new()
+		shape.radius = 0.3 / maxf(scale_factor, 0.01)
+		shape.height = 4.4 / maxf(body.scale.y, 0.01)
 		collision.shape = shape
-		collision.transform = item.global_transform.affine_inverse() * mesh_instance.global_transform
+		collision.position.y = shape.height * 0.5
 		body.add_child(collision)
-		collision.owner = owner
-		shape_count += 1
-	if shape_count == 0:
-		body.queue_free()
+	elif kind == "bush":
+		var collision := CollisionShape3D.new()
+		var shape := SphereShape3D.new()
+		shape.radius = 0.72 / maxf(scale_factor, 0.01)
+		collision.shape = shape
+		collision.position.y = 0.52 / maxf(body.scale.y, 0.01)
+		body.add_child(collision)
+	elif kind == "rock":
+		var shape_count := 0
+		for node in visual.find_children("*", "MeshInstance3D", true, false):
+			var mesh_instance := node as MeshInstance3D
+			if mesh_instance.mesh == null:
+				continue
+			var shape := mesh_instance.mesh.create_convex_shape(true, true)
+			if shape == null:
+				continue
+			var collision := CollisionShape3D.new()
+			collision.name = "RockShape_%02d" % shape_count
+			collision.shape = shape
+			collision.transform = body.global_transform.affine_inverse() * mesh_instance.global_transform
+			body.add_child(collision)
+			shape_count += 1
 
 func _set_owner_recursive(node: Node) -> void:
 	for child in node.get_children():

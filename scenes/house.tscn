@@ -2,6 +2,39 @@
 
 [ext_resource type="PackedScene" uid="uid://cqggrg3kfyxiy" path="res://assets/external/scandinavian_cabin/scandinavian_log_cabin.glb" id="1_cabin"]
 [ext_resource type="Script" uid="uid://bo4rdueif3g7b" path="res://scripts/cabin_collision.gd" id="2_collision"]
+[ext_resource type="Script" path="res://scripts/wood_stove.gd" id="3_stove"]
+
+[sub_resource type="StandardMaterial3D" id="StoveIron"]
+albedo_color = Color(0.055, 0.05, 0.045, 1)
+roughness = 0.78
+metallic = 0.55
+
+[sub_resource type="StandardMaterial3D" id="FlameMat"]
+albedo_color = Color(1, 0.2, 0.015, 1)
+emission_enabled = true
+emission = Color(1, 0.075, 0.005, 1)
+emission_energy_multiplier = 5.0
+
+[sub_resource type="BoxMesh" id="StoveBodyMesh"]
+material = SubResource("StoveIron")
+size = Vector3(0.72, 0.82, 0.65)
+
+[sub_resource type="CylinderMesh" id="StovePipeMesh"]
+material = SubResource("StoveIron")
+top_radius = 0.11
+bottom_radius = 0.11
+height = 1.8
+radial_segments = 8
+
+[sub_resource type="SphereMesh" id="FlameMesh"]
+material = SubResource("FlameMat")
+radius = 0.13
+height = 0.36
+radial_segments = 6
+rings = 3
+
+[sub_resource type="BoxShape3D" id="StoveShape"]
+size = Vector3(0.78, 0.9, 0.72)
 
 [sub_resource type="BoxShape3D" id="StairRampShape"]
 size = Vector3(2.8687987, 0.14, 1.8)
@@ -41,3 +74,32 @@ shadow_bias = 0.035
 shadow_normal_bias = 0.4
 shadow_blur = 0.7
 omni_range = 6.0
+
+
+[node name="WoodStove" type="StaticBody3D" parent="."]
+position = Vector3(-2.3, 1.08, -1.35)
+script = ExtResource("3_stove")
+
+[node name="Body" type="MeshInstance3D" parent="WoodStove"]
+position = Vector3(0, 0.43, 0)
+mesh = SubResource("StoveBodyMesh")
+
+[node name="Pipe" type="MeshInstance3D" parent="WoodStove"]
+position = Vector3(0, 1.65, 0)
+mesh = SubResource("StovePipeMesh")
+
+[node name="Flame" type="MeshInstance3D" parent="WoodStove"]
+visible = false
+position = Vector3(0, 0.42, 0.34)
+mesh = SubResource("FlameMesh")
+
+[node name="FireLight" type="OmniLight3D" parent="WoodStove"]
+position = Vector3(0, 0.72, 0.45)
+light_color = Color(1, 0.37, 0.1, 1)
+light_energy = 0.0
+omni_range = 6.0
+shadow_enabled = true
+
+[node name="Collision" type="CollisionShape3D" parent="WoodStove"]
+position = Vector3(0, 0.45, 0)
+shape = SubResource("StoveShape")

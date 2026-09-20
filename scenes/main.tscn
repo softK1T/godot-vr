@@ -4,7 +4,6 @@
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
 [ext_resource type="Script" uid="uid://q56x0deh1fe1" path="res://scripts/forest_generator.gd" id="3_forest"]
 [ext_resource type="Script" uid="uid://cy5jhe8qh4upp" path="res://scripts/atmosphere.gd" id="4_atmos"]
-[ext_resource type="PackedScene" path="res://scenes/garden.tscn" id="5_garden"]
 [ext_resource type="PackedScene" uid="uid://c0e7glie14yah" path="res://assets/external/kaykit_forest/Tree_1_A_Color1.gltf" id="10_tree1"]
 [ext_resource type="PackedScene" uid="uid://cl2fvyg0opbg1" path="res://assets/external/kaykit_forest/Tree_2_B_Color1.gltf" id="11_tree2"]
 [ext_resource type="PackedScene" uid="uid://rxq71raoug15" path="res://assets/external/kaykit_forest/Tree_3_A_Color1.gltf" id="12_tree3"]
@@ -20,10 +19,12 @@
 [ext_resource type="PackedScene" uid="uid://dnjwni0c211t6" path="res://assets/external/kaykit_forest/Grass_2_C_Singlesided_Color1.gltf" id="41_grass2"]
 [ext_resource type="PackedScene" uid="uid://bg020tljdlsxk" path="res://assets/external/kaykit_forest/Grass_1_C_Singlesided_Color1.gltf" id="42_grass3"]
 [ext_resource type="PackedScene" uid="uid://x7ejstguwc8r" path="res://assets/external/kaykit_forest/Grass_2_A_Singlesided_Color1.gltf" id="43_grass4"]
-[ext_resource type="Script" uid="uid://dmrkcyri4rp1t" path="res://scripts/world_trail.gd" id="50_trail"]
 [ext_resource type="Shader" uid="uid://rtwgd68xx8ye" path="res://shaders/forest_ground.gdshader" id="51_ground_shader"]
 [ext_resource type="Script" uid="uid://f13j2rgfupw1" path="res://scripts/ground_detail.gd" id="52_ground_detail"]
 [ext_resource type="Script" path="res://scripts/low_poly_ground.gd" id="53_low_poly_ground"]
+[ext_resource type="Script" path="res://scripts/survival_resource_field.gd" id="54_resources"]
+[ext_resource type="Script" path="res://scripts/living_world.gd" id="55_living"]
+[ext_resource type="Script" path="res://scripts/volumetric_grass_field.gd" id="57_volgrass"]
 
 [sub_resource type="ProceduralSkyMaterial" id="DaySkyMaterial"]
 sky_top_color = Color(0.08, 0.22, 0.42, 1)
@@ -160,31 +161,8 @@ directional_shadow_max_distance = 42.0
 [node name="Atmosphere" type="Node" parent="." unique_id=2043704434]
 script = ExtResource("4_atmos")
 
-[node name="DriftingMotes" type="GPUParticles3D" parent="." unique_id=601919872]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -2)
-amount = 110
-lifetime = 18.0
-randomness = 0.8
-visibility_aabb = AABB(-22, -5, -22, 44, 10, 44)
-process_material = SubResource("MoteProcess")
-draw_pass_1 = SubResource("MoteMesh")
-
-[node name="Fireflies" type="GPUParticles3D" parent="." unique_id=265937834]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, -2)
-amount = 24
-lifetime = 9.0
-randomness = 1.0
-visibility_aabb = AABB(-15, -3, -15, 30, 7, 30)
-process_material = SubResource("FireflyProcess")
-draw_pass_1 = SubResource("FireflyMesh")
-
-[node name="Trail" type="Node3D" parent="." unique_id=1248745905]
-script = ExtResource("50_trail")
-path_width = 1.2000000000000002
-edge_stone_count = 54
-
-[node name="GroundDetail" type="Node3D" parent="." unique_id=1354884673]
-script = ExtResource("52_ground_detail")
+[node name="LivingWorld" type="Node" parent="."]
+script = ExtResource("55_living")
 
 [node name="Ground" type="StaticBody3D" parent="." unique_id=529845258]
 script = ExtResource("53_low_poly_ground")
@@ -197,15 +175,32 @@ cast_shadow = 1
 visible = false
 shape = SubResource("GroundShape")
 
+[node name="SurvivalResources" type="Node3D" parent="."]
+script = ExtResource("54_resources")
+berry_count = 0
+stone_count = 0
+
+[node name="GroundDetail" type="Node3D" parent="." unique_id=1354884673]
+script = ExtResource("52_ground_detail")
+
+[node name="VolumetricGrass" type="Node3D" parent="."]
+script = ExtResource("57_volgrass")
+
 [node name="Forest" type="Node3D" parent="." unique_id=2130205384]
 script = ExtResource("3_forest")
+tree_count = 720
 tree_scenes = Array[PackedScene]([ExtResource("10_tree1"), ExtResource("11_tree2"), ExtResource("12_tree3"), ExtResource("13_tree4"), ExtResource("14_tree5")])
 bush_scenes = Array[PackedScene]([ExtResource("20_bush1"), ExtResource("21_bush2"), ExtResource("22_bush3")])
 rock_scenes = Array[PackedScene]([ExtResource("30_rock1"), ExtResource("31_rock2"), ExtResource("32_rock3")])
 grass_scenes = Array[PackedScene]([ExtResource("40_grass1"), ExtResource("41_grass2"), ExtResource("42_grass3"), ExtResource("43_grass4")])
+bush_count = 380
+rock_count = 150
+grass_count = 0
+clearing_tree_count = 42
+clearing_bush_count = 95
+clearing_rock_count = 55
+clearing_grass_count = 0
 
-[node name="Garden" parent="." unique_id=1267856265 instance=ExtResource("5_garden")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 0, -7)
 
 [node name="House" parent="." unique_id=754510079 instance=ExtResource("1_house")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
