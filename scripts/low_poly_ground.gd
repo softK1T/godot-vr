@@ -294,3 +294,12 @@ func _distance(point:Vector2,route:PackedVector2Array)->float:
 	var best:=INF
 	for i in range(route.size()-1): var start:=route[i];var segment:=route[i+1]-start;var ratio:=clampf((point-start).dot(segment)/maxf(segment.length_squared(),.0001),0,1);best=minf(best,point.distance_to(start+segment*ratio))
 	return best
+
+
+func _notification(what: int) -> void:
+	# Keep the procedural terrain out of main.tscn; it is rebuilt at runtime.
+	if what == NOTIFICATION_EDITOR_PRE_SAVE:
+		if is_instance_valid(mesh_instance):
+			mesh_instance.mesh = null
+	elif what == NOTIFICATION_EDITOR_POST_SAVE:
+		build()
