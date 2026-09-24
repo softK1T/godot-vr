@@ -41,6 +41,7 @@ var garden_route := PackedVector3Array([
 func _ready() -> void:
 	if get_child_count() == 0:
 		build()
+	_wear_start()
 
 func build() -> void:
 	for child in get_children():
@@ -206,3 +207,212 @@ func _add_dirt_patches(curves: Array[PackedVector3Array], material: Material) ->
 	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	instance.visibility_range_end = 52.0
 	add_child(instance)
+
+# --- Persistent footpath wear (runtime only, never in the editor) ---
+# Walking marks cells on a coarse grid; worn cells get flat dirt patches in one
+# MultiMesh and grass tufts there are thinned. The ground mesh is never rebuilt.
+const WEAR_CELL := 0.9
+const WEAR_SAVE_PATH := "user://trails.json"
+const WEAR_MAX_PATCHES := 3000
+const WEAR_PER_STEP := 0.035
+var _wear: Dictionary = {}
+var _wear_slot: Dictionary = {}
+var _wear_level: Dictionary = {}
+var _wear_mm: MultiMesh
+var _wear_ground: Node
+var _wear_last := Vector2.INF
+var _wear_timer := 0.0
+var _wear_save_timer := 0.0
+var _wear_dirty := false
+var _wear_ready := false
+var _grass_mm: MultiMesh
+var _grass_cells: Dictionary = {}
+var _grass_hidden: Dictionary = {}
+var _grass_scan := 0.0
+
+
+func _wear_start() -> void:
+	if Engine.is_editor_hint():
+		return
+	await get_tree().process_frame
+	_wear_ground = get_node_or_null("../Ground")
+	if _wear_ground == null and get_tree().current_scene:
+		for n in get_tree().current_scene.find_children("*", "StaticBody3D", true, false):
+			if n.has_method("surface_height"):
+				_wear_ground = n
+				break
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.62
+	mesh.bottom_radius = 0.66
+	mesh.height = 0.012
+	mesh.radial_segments = 7
+	mesh.rings = 1
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.roughness = 1.0
+	mesh.material = mat
+	_wear_mm = MultiMesh.new()
+	_wear_mm.transform_format = MultiMesh.TRANSFORM_3D
+	_wear_mm.use_colors = true
+	_wear_mm.mesh = mesh
+	_wear_mm.instance_count = WEAR_MAX_PATCHES
+	_wear_mm.visible_instance_count = 0
+	var mmi := MultiMeshInstance3D.new()
+	mmi.name = "PlayerTrailWear"
+	mmi.multimesh = _wear_mm
+	mmi.top_level = true
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mmi.visibility_range_end = 60.0
+	add_child(mmi)
+	_wear_load()
+	_wear_ready = true
+
+
+func _process(delta: float) -> void:
+	if Engine.is_editor_hint() or not _wear_ready:
+		return
+	_wear_timer += delta
+	_wear_save_timer += delta
+	_grass_scan -= delta
+	if _grass_mm == null and _grass_scan <= 0.0:
+		_grass_scan = 2.0
+		_wear_find_grass()
+	if _wear_save_timer > 30.0:
+		_wear_save_timer = 0.0
+		if _wear_dirty:
+			_wear_save()
+	if _wear_timer < 0.25:
+		return
+	_wear_timer = 0.0
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return
+	var p := Vector2(cam.global_position.x, cam.global_position.z)
+	if _wear_last == Vector2.INF:
+		_wear_last = p
+		return
+	var moved := p.distance_to(_wear_last)
+	_wear_last = p
+	if moved < 0.15 or moved > 3.0:
+		return
+	if _is_inside_house_buffer(Vector3(p.x, 0.0, p.y)):
+		return
+	if _wear_ground and _wear_ground.has_method("is_water") and bool(_wear_ground.call("is_water", p)):
+		return
+	if cam.global_position.y - _wear_height(p) > 2.6:
+		return
+	var c := Vector2i(floori(p.x / WEAR_CELL), floori(p.y / WEAR_CELL))
+	_wear_add(c, WEAR_PER_STEP)
+	for n in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		_wear_add(c + n, WEAR_PER_STEP * 0.2)
+
+
+func _notification(what: int) -> void:
+	if Engine.is_editor_hint():
+		return
+	if (what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_EXIT_TREE) and _wear_dirty:
+		_wear_save()
+
+
+func _wear_height(p: Vector2) -> float:
+	if _wear_ground and _wear_ground.has_method("surface_height"):
+		return float(_wear_ground.call("surface_height", p))
+	return 0.0
+
+
+func _wear_add(c: Vector2i, amount: float) -> void:
+	var w := minf(1.0, float(_wear.get(c, 0.0)) + amount)
+	_wear[c] = w
+	_wear_dirty = true
+	_wear_apply(c)
+
+
+func _wear_apply(c: Vector2i) -> void:
+	var w := float(_wear.get(c, 0.0))
+	var level := int(w * 4.0)
+	if level == int(_wear_level.get(c, -1)):
+		return
+	_wear_level[c] = level
+	if level >= 1 and _wear_mm != null:
+		var slot := -1
+		if _wear_slot.has(c):
+			slot = int(_wear_slot[c])
+		elif _wear_mm.visible_instance_count < WEAR_MAX_PATCHES:
+			slot = _wear_mm.visible_instance_count
+			_wear_slot[c] = slot
+			_wear_mm.visible_instance_count = slot + 1
+		if slot >= 0:
+			var center := (Vector2(c) + Vector2(0.5, 0.5)) * WEAR_CELL
+			center += Vector2(sin(float(c.x) * 12.9898 + float(c.y) * 78.233), cos(float(c.x) * 39.35 + float(c.y) * 11.13)) * 0.18
+			var normal := Vector3.UP
+			if _wear_ground and _wear_ground.has_method("sample_normal"):
+				normal = (_wear_ground.call("sample_normal", center) as Vector3).normalized()
+			var s := lerpf(0.55, 1.05, w)
+			var basis := Basis(Quaternion(Vector3.UP, normal)) * Basis(Vector3.UP, float(c.x * 7 + c.y * 13)).scaled(Vector3(s, 1.0, s * 0.8))
+			_wear_mm.set_instance_transform(slot, Transform3D(basis, Vector3(center.x, _wear_height(center) + 0.012, center.y)))
+			_wear_mm.set_instance_color(slot, Color(0.37, 0.36, 0.25).lerp(Color(0.35, 0.28, 0.19), w))
+	_wear_thin_grass(c, w)
+
+
+func _wear_find_grass() -> void:
+	var root := get_tree().current_scene
+	if root == null:
+		return
+	var found: MultiMeshInstance3D = null
+	for n in root.find_children("VolumetricLowPolyGrass", "MultiMeshInstance3D", true, false):
+		found = n as MultiMeshInstance3D
+		break
+	if found == null or found.multimesh == null:
+		return
+	_grass_mm = found.multimesh
+	var gxf := found.global_transform
+	for i in _grass_mm.instance_count:
+		var origin := gxf * _grass_mm.get_instance_transform(i).origin
+		var c := Vector2i(floori(origin.x / WEAR_CELL), floori(origin.z / WEAR_CELL))
+		if not _grass_cells.has(c):
+			_grass_cells[c] = []
+		(_grass_cells[c] as Array).append(i)
+	for c in _wear.keys():
+		_wear_thin_grass(c, float(_wear[c]))
+
+
+func _wear_thin_grass(c: Vector2i, w: float) -> void:
+	if _grass_mm == null or not _grass_cells.has(c):
+		return
+	var keep := 1.0 if w < 0.35 else (0.5 if w < 0.7 else 0.0)
+	var list: Array = _grass_cells[c]
+	for k in list.size():
+		var i: int = list[k]
+		if float(k % 4) / 4.0 >= keep and not _grass_hidden.has(i):
+			_grass_hidden[i] = true
+			var t := _grass_mm.get_instance_transform(i)
+			t.origin.y -= 200.0
+			_grass_mm.set_instance_transform(i, t)
+
+
+func _wear_save() -> void:
+	var cells := []
+	for c in _wear.keys():
+		cells.append([c.x, c.y, snappedf(float(_wear[c]), 0.01)])
+	var tmp := WEAR_SAVE_PATH + ".tmp"
+	var f := FileAccess.open(tmp, FileAccess.WRITE)
+	if f == null:
+		return
+	f.store_string(JSON.stringify({"version": 1, "cells": cells}))
+	f.close()
+	DirAccess.rename_absolute(ProjectSettings.globalize_path(tmp), ProjectSettings.globalize_path(WEAR_SAVE_PATH))
+	_wear_dirty = false
+
+
+func _wear_load() -> void:
+	if not FileAccess.file_exists(WEAR_SAVE_PATH):
+		return
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(WEAR_SAVE_PATH))
+	if not data is Dictionary:
+		return
+	for e in (data as Dictionary).get("cells", []):
+		if e is Array and e.size() >= 3:
+			var c := Vector2i(int(e[0]), int(e[1]))
+			_wear[c] = clampf(float(e[2]), 0.0, 1.0)
+			_wear_apply(c)
+	_wear_dirty = false
