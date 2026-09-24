@@ -222,7 +222,7 @@ func _on_right_button_pressed(name: String) -> void:
 	if not xr_active: return
 	match name:
 		"trigger_click": player.call("_try_interact")
-		"ax_button": player.call("_select_slot", posmod(int(player.get("selected_slot")) + 1, 11))
+		"ax_button": player.call("_select_slot", posmod(int(player.get("selected_slot")) + 1, (player.get_script().get_script_constant_map()["SLOT_ITEMS"] as Array).size()))
 		"by_button": _emulate_axe_swing() if player.has_equipped_tool("axe") else player.call("_use_selected_item")
 
 func _on_left_button_pressed(name: String) -> void:

@@ -19,14 +19,14 @@ extends CharacterBody3D
 @onready var warmth_bar: ProgressBar = $HUD/SurvivalPanel/Margin/VBox/Warmth
 @onready var stamina_bar: ProgressBar = $HUD/SurvivalPanel/Margin/VBox/Stamina
 
-const SLOT_ITEMS := ["axe", "pickaxe", "hammer", "berries", "mushroom", "vegetables", "cooked_food", "seeds", "wood", "stone", "sticks", "sapling"]
-const SLOT_NAMES := ["AXE", "PICKAXE", "HAMMER", "BERRIES", "MUSHROOM", "VEGETABLES", "WARM MEAL", "SEEDS", "WOOD", "STONE", "STICKS", "SAPLING"]
-const SLOT_ICONS := ["A", "P", "H", "●", "♠", "◆", "▣", "✦", "W", "S", "I", "♣"]
+const SLOT_ITEMS := ["axe", "pickaxe", "hammer", "berries", "mushroom", "vegetables", "cooked_food", "seeds", "wood", "stone", "sticks", "sapling", "fishing_rod", "raw_fish", "cooked_fish"]
+const SLOT_NAMES := ["AXE", "PICKAXE", "HAMMER", "BERRIES", "MUSHROOM", "VEGETABLES", "WARM MEAL", "SEEDS", "WOOD", "STONE", "STICKS", "SAPLING", "FISHING ROD", "RAW FISH", "FRIED FISH"]
+const SLOT_ICONS := ["A", "P", "H", "●", "♠", "◆", "▣", "✦", "W", "S", "I", "♣", "R", "f", "F"]
 const BUILD_PIECES := ["farm_bed", "gate", "wicket", "fence", "base_fence"]
 const GATE_ITEMS := ["gate", "wicket"]
 const BUILD_NAMES := {"farm_bed":"FARM BED", "gate":"WOODEN GATE", "wicket":"WICKET GATE", "fence":"LOW FENCE", "base_fence":"RUSTIC FENCE"}
 const BUILD_COSTS := {"farm_bed":{"wood":6,"stone":2}, "gate":{"wood":8,"stone":2}, "wicket":{"wood":5,"stone":2}, "fence":{"wood":1}, "base_fence":{"wood":2}}
-const EDIBLE := ["berries", "mushroom", "vegetables", "cooked_food"]
+const EDIBLE := ["berries", "mushroom", "vegetables", "cooked_food", "raw_fish", "cooked_fish"]
 
 var selected_slot := 0
 var inventory_open := false

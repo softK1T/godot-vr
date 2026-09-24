@@ -90,7 +90,6 @@ disables shadows on small decor after the world is generated.
 
 ## Known limitations
 
-- The hotbar has 12 fixed slots, so the fishing rod and fish are not shown there (fishing works when the rod is in the inventory; fried fish is eaten with the eat key).
 - Bridge sections cannot be removed.
 - Trails never regrow.
 - Forest decor is not merged into MultiMesh yet (the optimizer finds no batchable instances in the imported models); trees rely on visibility ranges instead of mesh LOD.
