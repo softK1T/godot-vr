@@ -13,13 +13,17 @@ func _ready()->void:call_deferred("build")
 func build()->void:
 	for child in get_children():child.queue_free()
 	_rng.seed=seed_value
-	for i in tree_count:_spawn_tree(_find_position(12.0,42.0),i)
-	for i in berry_count:_spawn_bush(_find_position(7.5,28.0),i)
-	for i in mushroom_count:_spawn_mushroom(_find_position(6.0,25.0),i)
-	for i in stone_count:_spawn_stone(_find_position(8.0,38.0),i)
-func _find_position(min_radius:float,max_radius:float)->Vector3:
-	for attempt in 80:
+	for i in tree_count:_spawn_tree(_find_position(12.0,42.0,true),i)
+	for i in berry_count:_spawn_bush(_find_position(7.5,28.0,false,"bush"),i)
+	for i in mushroom_count:_spawn_mushroom(_find_position(6.0,25.0,false,"mushroom"),i)
+	for i in stone_count:_spawn_stone(_find_position(8.0,38.0,false,"rock"),i)
+func _find_position(min_radius:float,max_radius:float,tree:=false,kind:="bush")->Vector3:
+	for attempt in 180:
 		var angle:=_rng.randf_range(0,TAU);var radius:=sqrt(_rng.randf_range(min_radius*min_radius,max_radius*max_radius));var p:=Vector3(cos(angle)*radius,0,sin(angle)*radius)
+		var ground:=get_node_or_null("../Ground")
+		if ground and ground.has_method("is_water") and ground.call("is_water",Vector2(p.x,p.z)):continue
+		if tree and ground and ground.has_method("tree_allowed") and not ground.call("tree_allowed",Vector2(p.x,p.z)):continue
+		if ground and ground.has_method("can_place") and not ground.call("can_place",Vector2(p.x,p.z),"tree" if tree else kind):continue
 		if p.distance_to(Vector3(0,0,-2))>10 and p.distance_to(Vector3(-8,0,-4))>8:return _surface_position(p)
 	return _surface_position(Vector3(max_radius,0,0))
 func _surface_position(p: Vector3, offset := 0.012) -> Vector3:
@@ -32,29 +36,29 @@ func _mat(color:Color,rough:=1.0)->StandardMaterial3D:
 	var m:=StandardMaterial3D.new();m.albedo_color=color;m.roughness=rough;return m
 func _spawn_tree(pos:Vector3,index:int)->void:
 	var body:=StaticBody3D.new();body.name="HarvestTree%02d"%index;body.position=pos;body.rotation.y=_rng.randf_range(0,TAU);body.set_script(load("res://scripts/harvestable_resource.gd"));body.set("resource_kind","tree");body.set("amount",4);body.set("hits_required",3);body.set("respawn_seconds",240.0);add_child(body)
-	var trunk:=MeshInstance3D.new();var trunk_mesh:=CylinderMesh.new();trunk_mesh.top_radius=.2;trunk_mesh.bottom_radius=.34;trunk_mesh.height=3.2;trunk_mesh.radial_segments=7;trunk_mesh.material=_mat(Color(.19,.105,.045));trunk.mesh=trunk_mesh;trunk.position.y=1.6;body.add_child(trunk)
+	var trunk:=MeshInstance3D.new();var trunk_mesh:=CylinderMesh.new();trunk_mesh.top_radius=.2;trunk_mesh.bottom_radius=.34;trunk_mesh.height=3.2;trunk_mesh.radial_segments=7;trunk_mesh.material=_mat(Color(.22,.14,.085));trunk.mesh=trunk_mesh;trunk.position.y=1.6;body.add_child(trunk)
 	for layer in 3:
-		var crown:=MeshInstance3D.new();var mesh:=CylinderMesh.new();mesh.top_radius=.08;mesh.bottom_radius=1.25-layer*.18;mesh.height=1.75;mesh.radial_segments=7;mesh.material=_mat(Color(.055+layer*.018,.14+layer*.025,.038));crown.mesh=mesh;crown.position=Vector3(_rng.randf_range(-.18,.18),3.15+layer*.72,_rng.randf_range(-.18,.18));crown.rotation.y=_rng.randf_range(0,TAU);body.add_child(crown)
+		var crown:=MeshInstance3D.new();var mesh:=CylinderMesh.new();mesh.top_radius=.08;mesh.bottom_radius=1.25-layer*.18;mesh.height=1.75;mesh.radial_segments=7;mesh.material=_mat(Color(.085+layer*.012,.18+layer*.02,.072+layer*.009));crown.mesh=mesh;crown.position=Vector3(_rng.randf_range(-.18,.18),3.15+layer*.72,_rng.randf_range(-.18,.18));crown.rotation.y=_rng.randf_range(0,TAU);body.add_child(crown)
 	var shape:=CollisionShape3D.new();var capsule:=CapsuleShape3D.new();capsule.radius=.38;capsule.height=3.4;shape.shape=capsule;shape.position.y=1.7;body.add_child(shape)
 func _spawn_bush(pos:Vector3,index:int)->void:
 	var body:=StaticBody3D.new();body.name="BerryBush%02d"%index;body.position=pos;body.set_script(load("res://scripts/harvestable_resource.gd"));body.set("resource_kind","berry");body.set("amount",2);body.set("respawn_seconds",150.0);add_child(body)
 	for j in 5:
-		var leaf:=MeshInstance3D.new();var mesh:=SphereMesh.new();mesh.radius=.52;mesh.height=.85;mesh.radial_segments=6;mesh.rings=3;mesh.material=_mat(Color(.08+.02*j,.22+.014*j,.055));leaf.mesh=mesh;leaf.position=Vector3(_rng.randf_range(-.48,.48),.42+_rng.randf_range(0,.3),_rng.randf_range(-.48,.48));body.add_child(leaf)
+		var leaf:=MeshInstance3D.new();var mesh:=SphereMesh.new();mesh.radius=.52;mesh.height=.85;mesh.radial_segments=6;mesh.rings=3;mesh.material=_mat(Color(.10+.014*j,.22+.010*j,.085+.005*j));leaf.mesh=mesh;leaf.position=Vector3(_rng.randf_range(-.48,.48),.42+_rng.randf_range(0,.3),_rng.randf_range(-.48,.48));body.add_child(leaf)
 	for j in 7:
-		var berry:=MeshInstance3D.new();var bm:=SphereMesh.new();bm.radius=.055;bm.height=.11;bm.radial_segments=5;bm.rings=2;bm.material=_mat(Color(.58,.035,.08));berry.mesh=bm;berry.position=Vector3(_rng.randf_range(-.52,.52),_rng.randf_range(.45,.92),_rng.randf_range(-.52,.52));body.add_child(berry)
+		var berry:=MeshInstance3D.new();var bm:=SphereMesh.new();bm.radius=.055;bm.height=.11;bm.radial_segments=5;bm.rings=2;bm.material=_mat(Color(.39,.085,.105));berry.mesh=bm;berry.position=Vector3(_rng.randf_range(-.52,.52),_rng.randf_range(.45,.92),_rng.randf_range(-.52,.52));body.add_child(berry)
 	var shape:=CollisionShape3D.new();var sphere:=SphereShape3D.new();sphere.radius=.8;shape.shape=sphere;shape.position.y=.5;body.add_child(shape)
 func _spawn_mushroom(pos:Vector3,index:int)->void:
 	var body:=StaticBody3D.new();body.name="Mushroom%02d"%index;body.position=pos;body.set_script(load("res://scripts/harvestable_resource.gd"));body.set("resource_kind","mushroom");body.set("amount",1);body.set("respawn_seconds",100.0);add_child(body)
 	for j in _rng.randi_range(2,4):
 		var root:=Node3D.new();root.position=Vector3(_rng.randf_range(-.25,.25),0,_rng.randf_range(-.25,.25));root.scale=Vector3.ONE*_rng.randf_range(.7,1.15);body.add_child(root)
-		var stem:=MeshInstance3D.new();var sm:=CylinderMesh.new();sm.top_radius=.035;sm.bottom_radius=.055;sm.height=.3;sm.radial_segments=6;sm.material=_mat(Color(.7,.58,.38));stem.mesh=sm;stem.position.y=.15;root.add_child(stem)
-		var cap:=MeshInstance3D.new();var cm:=SphereMesh.new();cm.radius=.15;cm.height=.15;cm.radial_segments=6;cm.rings=2;cm.material=_mat(Color(.62,.16,.055));cap.mesh=cm;cap.position.y=.32;root.add_child(cap)
-	var shape:=CollisionShape3D.new();var sphere:=SphereShape3D.new();sphere.radius=.55;shape.shape=sphere;shape.position.y=.25;body.add_child(shape)
+		var stem:=MeshInstance3D.new();var sm:=CylinderMesh.new();sm.top_radius=.035;sm.bottom_radius=.055;sm.height=.3;sm.radial_segments=6;sm.material=_mat(Color(.58,.50,.38));stem.mesh=sm;stem.position.y=.15;root.add_child(stem)
+		var cap:=MeshInstance3D.new();var cm:=SphereMesh.new();cm.radius=.15;cm.height=.15;cm.radial_segments=6;cm.rings=2;cm.material=_mat(Color(.48,.19,.10));cap.mesh=cm;cap.position.y=.32;root.add_child(cap)
+	var shape:=CollisionShape3D.new();var sphere:=SphereShape3D.new();sphere.radius=.7;shape.shape=sphere;shape.position.y=.35;body.add_child(shape)
 
 func _spawn_stone(pos: Vector3, index: int) -> void:
 	var body := StaticBody3D.new()
 	body.name = "StoneDeposit%02d" % index
-	body.position = pos
+	body.position = pos - Vector3(0, 0.14, 0)
 	body.rotation.y = _rng.randf_range(0.0, TAU)
 	body.scale = Vector3.ONE * _rng.randf_range(0.8, 1.25)
 	body.set_script(load("res://scripts/harvestable_resource.gd"))
@@ -63,7 +67,7 @@ func _spawn_stone(pos: Vector3, index: int) -> void:
 	body.set("hits_required", 4)
 	body.set("respawn_seconds", 210.0)
 	add_child(body)
-	var stone_colors := [Color(0.27, 0.29, 0.27), Color(0.34, 0.33, 0.29), Color(0.22, 0.25, 0.25)]
+	var stone_colors := [Color(0.29, 0.30, 0.28), Color(0.36, 0.34, 0.30), Color(0.24, 0.27, 0.27)]
 	for j in _rng.randi_range(3, 5):
 		var rock := MeshInstance3D.new()
 		var mesh := SphereMesh.new()
@@ -83,3 +87,21 @@ func _spawn_stone(pos: Vector3, index: int) -> void:
 	shape.shape = sphere
 	shape.position.y = 0.42
 	body.add_child(shape)
+
+func plant_sapling(world_pos:Vector3)->void:
+	var p:=_surface_position(world_pos,.02);var ground:=get_node_or_null("../Ground")
+	if ground and ground.has_method("is_water") and ground.call("is_water",Vector2(p.x,p.z)):return
+	var body:=StaticBody3D.new();body.name="PlantedSapling";body.position=to_local(p) if is_inside_tree() else p;body.set_script(load("res://scripts/harvestable_resource.gd"));body.set("resource_kind","sapling");body.set("regrow_days",3);body.set("planted",true);add_child(body)
+	var trunk:=MeshInstance3D.new();trunk.name="Trunk";var tm:=CylinderMesh.new();tm.top_radius=.035;tm.bottom_radius=.055;tm.height=.65;tm.radial_segments=6;tm.material=_mat(Color(.25,.15,.07));trunk.mesh=tm;trunk.position.y=.325;body.add_child(trunk)
+	var crown:=MeshInstance3D.new();crown.name="Crown";var cm:=SphereMesh.new();cm.radius=.32;cm.height=.5;cm.radial_segments=6;cm.rings=3;cm.material=_mat(Color(.09,.3,.08));crown.mesh=cm;crown.position.y=.75;body.add_child(crown)
+	var shape:=CollisionShape3D.new();var cap:=CapsuleShape3D.new();cap.radius=.16;cap.height=1.0;shape.shape=cap;shape.position.y=.5;body.add_child(shape)
+
+func grow_tree_at(world_pos:Vector3,sapling:Node)->void:
+	var i:=get_child_count()+1000;sapling.queue_free();_spawn_tree(_surface_position(world_pos,.012),i)
+	var tree:=get_child(get_child_count()-1) as Node3D
+	if tree: tree.scale=Vector3.ONE*.25; create_tween().tween_property(tree,"scale",Vector3.ONE,2.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+# Used by the save system to recreate trees grown from saplings.
+func restore_tree_at(world_pos: Vector3) -> void:
+	var i := get_child_count() + 2000
+	_spawn_tree(_surface_position(world_pos, .012), i)

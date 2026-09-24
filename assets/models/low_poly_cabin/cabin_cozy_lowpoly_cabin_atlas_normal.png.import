@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bfex377qgf2jd"
 path.s3tc="res://.godot/imported/cabin_cozy_lowpoly_cabin_atlas_normal.png-ad11ad945cc3ee6424442c03a1e1619d.s3tc.ctex"
+path.etc2="res://.godot/imported/cabin_cozy_lowpoly_cabin_atlas_normal.png-ad11ad945cc3ee6424442c03a1e1619d.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/low_poly_cabin/cabin_cozy_lowpoly_cabin_atlas_normal.png"
-dest_files=["res://.godot/imported/cabin_cozy_lowpoly_cabin_atlas_normal.png-ad11ad945cc3ee6424442c03a1e1619d.s3tc.ctex"]
+dest_files=["res://.godot/imported/cabin_cozy_lowpoly_cabin_atlas_normal.png-ad11ad945cc3ee6424442c03a1e1619d.s3tc.ctex", "res://.godot/imported/cabin_cozy_lowpoly_cabin_atlas_normal.png-ad11ad945cc3ee6424442c03a1e1619d.etc2.ctex"]
 
 [params]
 

@@ -32,13 +32,14 @@ func build()->void:
   var p:=Vector3(cos(angle)*distance,.025,sin(angle)*distance)
   if _protected(p):continue
   p.y = _terrain_height(p) + 0.025
+  if _is_wet_spot(p): p.y -= 80.0
   var patch:=.5+.5*sin(p.x*.31+sin(p.z*.17)*2.1)*sin(p.z*.27-cos(p.x*.13))
   if _rng.randf()>lerpf(.42,1.0,patch):continue
   var scale_value:=_rng.randf_range(.68,1.32)
   var basis:=Basis(Vector3.UP,_rng.randf()*TAU).scaled(Vector3(scale_value*_rng.randf_range(.8,1.18),scale_value*_rng.randf_range(.82,1.28),scale_value*_rng.randf_range(.8,1.18)))
   transforms.append(Transform3D(basis,p))
   var shade:=_rng.randf_range(.82,1.18)
-  colors.append(Color(.45*shade,.72*shade,.22*shade,1.0))
+  colors.append(Color(.39*shade,.54*shade,.29*shade,1.0))
  var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.use_colors=true;mm.mesh=mesh;mm.instance_count=transforms.size()
  for i in transforms.size():mm.set_instance_transform(i,transforms[i]);mm.set_instance_color(i,colors[i])
  var field:=MultiMeshInstance3D.new();field.name="VolumetricLowPolyGrass";field.multimesh=mm;field.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_ON;field.visibility_range_end=52.0;field.visibility_range_fade_mode=GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
@@ -67,7 +68,7 @@ func _distance_to_route(p:Vector3,route:PackedVector3Array)->float:
 
 func _create_tuft_mesh()->ArrayMesh:
  var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES)
- var palette:=[Color(.18,.34,.075),Color(.24,.43,.095),Color(.31,.52,.12),Color(.38,.58,.14)]
+ var palette:=[Color(.23,.34,.16),Color(.28,.40,.19),Color(.32,.46,.22),Color(.37,.49,.25)]
  var blades:=[Vector4(-.18,-.08,.48,.03),Vector4(.13,.03,.64,-.06),Vector4(-.04,.16,.78,.04),Vector4(.24,-.13,.42,-.05),Vector4(-.25,.13,.55,.07),Vector4(.06,-.22,.68,.02),Vector4(.26,.17,.51,-.04)]
  for i in blades.size():
   var d:Vector4=blades[i];var c:Color=palette[i%palette.size()]
@@ -75,7 +76,18 @@ func _create_tuft_mesh()->ArrayMesh:
   var tilt:=Vector3(d.w,0,-d.w*.55);var tip:=center+Vector3(tilt.x,d.z,tilt.z)
   var a:=center+Vector3(-width,0,-depth);var b:=center+Vector3(width,0,-depth);var cc:=center+Vector3(width,0,depth);var e:=center+Vector3(-width,0,depth)
   _face(st,a,b,tip,c*.78);_face(st,b,cc,tip,c*.92);_face(st,cc,e,tip,c);_face(st,e,a,tip,c*.86);_face(st,a,e,cc,c*.65);_face(st,a,cc,b,c*.65)
- st.generate_normals();var mesh:=st.commit();var mat:=StandardMaterial3D.new();mat.vertex_color_use_as_albedo=true;mat.roughness=.96;mat.cull_mode=BaseMaterial3D.CULL_DISABLED;mesh.surface_set_material(0,mat);return mesh
+ st.generate_normals()
+ var mesh := st.commit()
+ var material := ShaderMaterial.new()
+ material.shader = preload("res://shaders/grass_wind.gdshader")
+ mesh.surface_set_material(0, material)
+ return mesh
 
 func _face(st:SurfaceTool,a:Vector3,b:Vector3,c:Vector3,color:Color)->void:
  st.set_color(color);st.add_vertex(a);st.set_color(color);st.add_vertex(b);st.set_color(color);st.add_vertex(c)
+
+func _is_wet_spot(p: Vector3) -> bool:
+ var ground := get_node_or_null("../Ground")
+ if ground == null or not ground.has_method("shore_factor"): return false
+ var xz := Vector2(p.x, p.z)
+ return ground.call("is_water", xz) or float(ground.call("shore_factor", xz)) > 0.55 or (ground.has_method("can_place") and not ground.call("can_place", xz, "grass"))

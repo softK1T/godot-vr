@@ -24,6 +24,11 @@ class_name ForestGenerator
 @export var clearing_rock_count: int = 45
 @export var clearing_grass_count: int = 180
 
+@export_range(0.0, 1.0, 0.05) var foliage_muting: float = 0.76
+@export_range(0.25, 1.0, 0.05) var canopy_brightness: float = 0.76
+const FOLIAGE_SHADER := preload("res://shaders/forest_foliage.gdshader")
+var _foliage_materials: Dictionary = {}
+
 var _rng := RandomNumberGenerator.new()
 # Shared exclusion map for every tree, bush, and rock, including clearing passes.
 # Vector3 stores world X/Z in x/z and the reserved radius in y.
@@ -43,6 +48,7 @@ func build() -> void:
 		child.free()
 	_rng.seed = seed_value
 	_occupied.clear()
+	_foliage_materials.clear()
 	# Seed the former yard first so it cannot be starved by the wider forest passes.
 	_scatter_left_of_house()
 	_scatter_clearing(tree_scenes, clearing_tree_count, 4.2, clearing_radius + 2.0, Vector2(0.72, 1.15), "Trees", "tree")
@@ -55,6 +61,14 @@ func build() -> void:
 	_scatter(grass_scenes, grass_count, clearing_radius - 4.0, radius * 0.72, Vector2(0.65, 1.35), "none")
 	_scatter_clearing(grass_scenes, clearing_grass_count, 3.8, clearing_radius + 2.0, Vector2(0.35, 0.95), "Grass", "none")
 
+
+# One metre from cabin walls plus the object footprint, across every pass.
+func _near_cabin(pos: Vector3, kind: String, scales: Vector2) -> bool:
+	var margin := 1.0
+	if kind == "tree": margin += 1.25 * scales.y
+	elif kind == "rock": margin += 0.9 * scales.y
+	return pos.x > -4.15 - margin and pos.x < 4.15 + margin \
+		and pos.z > -7.44 - margin and pos.z < -0.56 + margin
 
 func _scatter_left_of_house() -> void:
 	# The old garden reservation leaves an obvious visual hole west of the cabin.
@@ -80,10 +94,14 @@ func _scatter_left_of_house() -> void:
 		while placed < wanted and attempts < wanted * 55:
 			attempts += 1
 			var pos := Vector3(_rng.randf_range(-23.0, -5.6), 0.0, _rng.randf_range(-11.5, 7.5))
+			var _terrain := get_node_or_null("../Ground")
+			if _terrain and _terrain.has_method("can_place") and not _terrain.call("can_place", Vector2(pos.x, pos.z), "grass" if kind == "none" else kind): continue
 			# Preserve the physical garden itself, but not the broad region around it.
 			if pos.x > -12.0 and pos.x < -4.0 and pos.z > -8.0 and pos.z < 0.0:
 				continue
 			if pos.x > -5.8 and pos.z > -8.4 and pos.z < 0.8:
+				continue
+			if kind in ["tree", "rock"] and _near_cabin(pos, kind, scale_range):
 				continue
 			var spacing := _spacing_radius(kind, scale_range) * 0.74
 			if not _has_spacing(pos, spacing):
@@ -94,6 +112,8 @@ func _scatter_left_of_house() -> void:
 			var visual := scene.instantiate() as Node3D
 			if visual == null:
 				continue
+			if kind == "tree" or kind == "bush":
+				_tone_foliage(visual)
 			var item := _create_harvestable(visual, kind)
 			item.position = pos
 			item.rotation.y = _rng.randf() * TAU
@@ -127,8 +147,10 @@ func _plant_on_surface(item: Node3D, pos: Vector3, kind: String, scale_factor: f
 	var lowest := INF
 	for offset in samples:
 		lowest = minf(lowest, _terrain_height(Vector3(pos.x + offset.x, 0.0, pos.z + offset.y)))
-	var burial := (0.24 if kind == "tree" else (0.11 if kind == "bush" else 0.16)) * scale_factor
-	item.position = Vector3(pos.x, lowest - burial, pos.z)
+	var center := _terrain_height(Vector3(pos.x, 0.0, pos.z))
+	var base_y := lerpf(center, lowest, 0.35 if kind == "rock" else 0.15)
+	var burial := (0.12 if kind == "tree" else (0.06 if kind == "bush" else 0.1)) * scale_factor
+	item.position = Vector3(pos.x, base_y - burial, pos.z)
 
 func _scatter_clearing(library: Array[PackedScene], count: int, inner: float, outer: float, scale_range: Vector2, group_name: String, kind: String) -> void:
 	if library.is_empty():
@@ -144,7 +166,13 @@ func _scatter_clearing(library: Array[PackedScene], count: int, inner: float, ou
 		var angle := _rng.randf() * TAU
 		var distance := sqrt(_rng.randf_range(inner * inner, outer * outer))
 		var pos := Vector3(cos(angle) * distance, 0.0, sin(angle) * distance)
+		var ground:=get_node_or_null("../Ground")
+		if ground and ground.has_method("is_water") and ground.call("is_water",Vector2(pos.x,pos.z)): continue
+		if ground and ground.has_method("can_place") and not ground.call("can_place", Vector2(pos.x, pos.z), "grass" if kind == "none" else kind): continue
+		if kind == "tree" and ground and ground.has_method("tree_allowed") and not ground.call("tree_allowed", Vector2(pos.x, pos.z)): continue
 		# Protect only the cabin mesh itself, not the yard around it.
+		if kind in ["tree", "rock"] and _near_cabin(pos, kind, scale_range):
+			continue
 		if pos.x > -4.95 and pos.x < 5.35 and pos.z > -8.05 and pos.z < 0.45:
 			continue
 		# Keep the fenced garden at world X -11..-5, Z -7..-1 clear.
@@ -159,6 +187,8 @@ func _scatter_clearing(library: Array[PackedScene], count: int, inner: float, ou
 		var visual := scene.instantiate() as Node3D
 		if visual == null:
 			continue
+		if kind == "tree" or kind == "bush":
+			_tone_foliage(visual)
 		var item := _create_harvestable(visual, kind)
 		item.position = pos
 		item.rotation.y = _rng.randf() * TAU
@@ -185,7 +215,13 @@ func _scatter(library: Array[PackedScene], count: int, inner: float, outer: floa
 		if distance < inner:
 			continue
 		var pos := Vector3(cos(angle) * distance, 0.0, sin(angle) * distance)
+		var ground:=get_node_or_null("../Ground")
+		if ground and ground.has_method("is_water") and ground.call("is_water",Vector2(pos.x,pos.z)): continue
+		if ground and ground.has_method("can_place") and not ground.call("can_place", Vector2(pos.x, pos.z), "grass" if collision_type == "none" else collision_type): continue
+		if collision_type == "tree" and ground and ground.has_method("tree_allowed") and not ground.call("tree_allowed", Vector2(pos.x, pos.z)): continue
 		# Protect only the cabin mesh itself; the former empty yard is available.
+		if collision_type in ["tree", "rock"] and _near_cabin(pos, collision_type, scale_range):
+			continue
 		if pos.x > -4.95 and pos.x < 5.35 and pos.z > -8.05 and pos.z < 0.45:
 			continue
 		# Keep only a tiny spawn pocket so the player cannot begin inside a trunk or rock.
@@ -203,6 +239,8 @@ func _scatter(library: Array[PackedScene], count: int, inner: float, outer: floa
 		var visual := scene.instantiate() as Node3D
 		if visual == null:
 			continue
+		if collision_type == "tree" or collision_type == "bush":
+			_tone_foliage(visual)
 		var item := _create_harvestable(visual, collision_type)
 		item.position = pos
 		item.rotation.y = _rng.randf() * TAU
@@ -270,6 +308,27 @@ func _configure_visibility(item: Node3D, is_tree: bool, scatter_radius: float) -
 		geometry.visibility_range_end_margin = 0.0
 		geometry.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
 		geometry.lod_bias = 0.65 if is_tree else 0.5
+
+func _tone_foliage(visual: Node3D) -> void:
+	# Preserve trunk and bark colors; tint only green texels in the imported atlas.
+	for node in visual.find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance.mesh == null:
+			continue
+		for surface in range(mesh_instance.mesh.get_surface_count()):
+			var imported := mesh_instance.get_active_material(surface) as BaseMaterial3D
+			if imported == null or imported.albedo_texture == null:
+				continue
+			var texture := imported.albedo_texture
+			var texture_id := texture.get_instance_id()
+			if not _foliage_materials.has(texture_id):
+				var muted := ShaderMaterial.new()
+				muted.shader = FOLIAGE_SHADER
+				muted.set_shader_parameter("albedo_texture", texture)
+				muted.set_shader_parameter("foliage_strength", foliage_muting)
+				muted.set_shader_parameter("canopy_brightness", canopy_brightness)
+				_foliage_materials[texture_id] = muted
+			mesh_instance.set_surface_override_material(surface, _foliage_materials[texture_id])
 
 func _create_harvestable(visual: Node3D, kind: String) -> Node3D:
 	if kind not in ["tree", "rock", "bush"]:

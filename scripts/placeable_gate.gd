@@ -3,6 +3,8 @@ class_name PlaceableGate
 
 @export var open_angle_degrees:=88.0
 var _leaf:Node3D
+var _leaf2:Node3D
+var _closed_rotation2:=0.0
 var _closed_rotation:=0.0
 var _target_rotation:=0.0
 var _is_open:=false
@@ -11,9 +13,12 @@ var _breaking:=false
 
 func _ready()->void:
  _leaf=get_node("InteractiveGate");_closed_rotation=_leaf.rotation.y;_target_rotation=_closed_rotation
+ _leaf2=get_node_or_null("InteractiveGateRight")
+ if _leaf2:_closed_rotation2=_leaf2.rotation.y
 
 func _physics_process(delta:float)->void:
  if _leaf:_leaf.rotation.y=lerp_angle(_leaf.rotation.y,_target_rotation,minf(1.0,4.0*delta))
+ if _leaf2:_leaf2.rotation.y=lerp_angle(_leaf2.rotation.y,_closed_rotation2-(_target_rotation-_closed_rotation),minf(1.0,4.0*delta))
 
 func get_interaction_text()->String:
  if _breaking:return ""

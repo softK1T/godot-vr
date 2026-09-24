@@ -1,4 +1,6 @@
 extends Node3D
+
+const LIGHT_SWITCH_SCRIPT := preload("res://scripts/cabin_light_switch.gd")
 ## Connects the imported cabin to this project's interaction and lighting systems.
 
 @export var add_interior_light := true
@@ -9,6 +11,7 @@ func _ready() -> void:
 	_setup_door()
 	_setup_stove()
 	_setup_lights()
+	_setup_light_switch()
 
 func _configure_visuals() -> void:
 	var model := get_node_or_null("CabinModel")
@@ -55,13 +58,33 @@ func _setup_stove() -> void:
 		fire_light.light_energy = 0.0
 		fire_light.light_cull_mask = 2
 		fire_light.light_volumetric_fog_energy = 0.2
-		fire_light.omni_range = 4.5
+		fire_light.omni_range = 7.0
 		fire_light.shadow_enabled = true
 		stove_body.add_child(fire_light)
+	# The stove's shadowed flame only lights the opening in the metal casing.
+	# A weak, shadowless bounced-light source spreads its warmth across the room.
+	var room_fill := stove_body.get_node_or_null("StoveRoomBounce") as OmniLight3D
+	if room_fill == null:
+		room_fill = OmniLight3D.new()
+		room_fill.name = "StoveRoomBounce"
+		room_fill.light_color = Color(1.0, 0.59, 0.34)
+		room_fill.light_energy = 0.0
+		room_fill.light_cull_mask = 2
+		room_fill.light_volumetric_fog_energy = 0.0
+		room_fill.omni_range = 7.5
+		room_fill.omni_attenuation = 1.4
+		room_fill.shadow_enabled = false
+		stove_body.add_child(room_fill)
+	# Keep the bounce light low beside the stove. At (0, 2.2, 0) it sat almost
+	# exactly on the ceiling lamp socket and painted a hot spot on the ceiling
+	# that looked like the lamp was still on whenever the stove was burning.
+	var toward_room := to_global(Vector3.ZERO) - stove_body.global_position
+	toward_room.y = 0.0
+	room_fill.global_position = stove_body.global_position + toward_room.normalized() * minf(1.2, toward_room.length()) + Vector3(0.0, 1.0, 0.0)
 	var fire_socket := find_child("SOCKET_StoveFire", true, false) as Node3D
 	if fire_socket != null:
 		fire_light.global_position = fire_socket.global_position
-	stove_body.configure_visuals(fire_light, embers)
+	stove_body.configure_visuals(fire_light, embers, room_fill)
 
 func _setup_lights() -> void:
 	if add_interior_light:
@@ -69,8 +92,8 @@ func _setup_lights() -> void:
 			"SOCKET_InteriorLight",
 			"InteriorWarmth",
 			Color(1.0, 0.72, 0.46),
-			4.5,
-			8.0,
+			1.8,
+			6.5,
 			Vector3(0.0, -0.35, 0.0)
 		)
 	if add_porch_light:
@@ -78,8 +101,8 @@ func _setup_lights() -> void:
 			"SOCKET_PorchLight",
 			"PorchLight",
 			Color(1.0, 0.73, 0.45),
-			3.5,
-			6.0,
+			1.4,
+			4.5,
 			Vector3(0.0, -0.15, -0.25)
 		)
 
@@ -107,3 +130,22 @@ func _add_socket_light(
 	# treat the fixtures themselves as occluders and suppress all illumination.
 	light.shadow_enabled = false
 	socket.add_child(light)
+
+func _setup_light_switch() -> void:
+	# The front wall is thick: its inner face is near house z=2.9,
+	# not z=3.24 (the outer face). Keep the plate completely inside.
+	var switch_body := StaticBody3D.new()
+	switch_body.set_script(LIGHT_SWITCH_SCRIPT)
+	switch_body.name = "CabinLightSwitch"
+	switch_body.position = Vector3(1.12, 1.36, 2.84)
+	switch_body.rotation.y = PI
+	add_child(switch_body)
+	var interior_socket := find_child("SOCKET_InteriorLight", true, false) as Node3D
+	var porch_socket := find_child("SOCKET_PorchLight", true, false) as Node3D
+	var interior := interior_socket.get_node_or_null("InteriorWarmth") as OmniLight3D if interior_socket else null
+	var porch := porch_socket.get_node_or_null("PorchLight") as OmniLight3D if porch_socket else null
+	switch_body.configure(interior, porch)
+	# The imported lantern has a separate emissive surface that stays bright
+	# even when its OmniLight3D is hidden. Switch the mesh surface too.
+	var lantern := find_child("Lantern", true, false) as MeshInstance3D
+	switch_body.configure_lantern(lantern)

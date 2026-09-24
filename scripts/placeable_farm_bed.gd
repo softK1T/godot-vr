@@ -61,6 +61,12 @@ func _update_plants() -> void:
 	if not _plants:
 		return
 	_plants.visible = growth_stage > 0
+	if _plants.has_node("Grown"):
+		_plants.scale = Vector3.ONE
+		(_plants.get_node("Seeded") as Node3D).visible = growth_stage == 1
+		(_plants.get_node("Sprouts") as Node3D).visible = growth_stage == 2
+		(_plants.get_node("Grown") as Node3D).visible = growth_stage == 3
+		return
 	var scale_value: float = float([0.02, 0.32, 0.68, 1.0][growth_stage])
 	_plants.scale = Vector3.ONE * scale_value
 

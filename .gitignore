@@ -5,3 +5,6 @@ assets/source/
 *.blend
 *.zip
 .godot-test-home/
+.backup/
+archive/
+build/
