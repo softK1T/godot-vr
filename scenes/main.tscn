@@ -33,6 +33,7 @@
 [ext_resource type="Script" path="res://scripts/world_landmarks.gd" id="landmarks_script"]
 [ext_resource type="Script" path="res://scripts/fishing_controller.gd" id="fishing_script"]
 [ext_resource type="Script" path="res://scripts/bridge_builder.gd" id="bridge_script"]
+[ext_resource type="Script" path="res://scripts/world_optimizer.gd" id="optimizer_script"]
 
 [sub_resource type="ProceduralSkyMaterial" id="DaySkyMaterial"]
 sky_top_color = Color(0.24, 0.45, 0.71, 1)
@@ -159,4 +160,7 @@ script = ExtResource("fishing_script")
 
 [node name="BridgeBuilder" type="Node3D" parent="."]
 script = ExtResource("bridge_script")
+
+[node name="WorldOptimizer" type="Node" parent="."]
+script = ExtResource("optimizer_script")
 
