@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://scripts/world_fog.gd" id="97_fog"]
 [ext_resource type="Script" path="res://scripts/world_ecology.gd" id="98_ecology"]
 [ext_resource type="Script" path="res://scripts/world_wildlife.gd" id="99_wildlife"]
+[ext_resource type="Script" path="res://scripts/world_weather.gd" id="100_weather"]
 [ext_resource type="Script" path="res://scripts/save_system.gd" id="96_save"]
 [ext_resource type="PackedScene" uid="uid://bjs1nqulwn7vr" path="res://scenes/house.tscn" id="1_house"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
@@ -161,3 +162,6 @@ script = ExtResource("98_ecology")
 
 [node name="WorldWildlife" type="Node" parent="."]
 script = ExtResource("99_wildlife")
+
+[node name="WorldWeather" type="Node" parent="."]
+script = ExtResource("100_weather")

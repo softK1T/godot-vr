@@ -81,7 +81,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _state_snapshot() -> Dictionary:
 	var st := SurvivalState
-	return {"inventory": st.inventory.duplicate(true), "tools": st.tool_durability.duplicate(true), "health": st.health, "hunger": st.hunger, "warmth": st.warmth, "stamina": st.stamina, "day": st.day, "time": st.time_of_day}
+	return {"inventory": st.inventory.duplicate(true), "tools": st.tool_durability.duplicate(true), "health": st.health, "hunger": st.hunger, "warmth": st.warmth, "stamina": st.stamina, "day": st.day, "time": st.time_of_day, "rain_wet": st.rain_wetness}
 
 func _apply_state(s: Dictionary) -> void:
 	var st := SurvivalState
@@ -100,6 +100,7 @@ func _apply_state(s: Dictionary) -> void:
 	st.stamina = float(s.get("stamina", st.stamina))
 	st.day = int(s.get("day", st.day))
 	st.time_of_day = float(s.get("time", st.time_of_day))
+	st.rain_wetness = float(s.get("rain_wet", 0.0))
 	st.inventory_changed.emit(st.inventory.duplicate())
 	st.call("_emit_vitals")
 	st.time_changed.emit(st.day, int(st.time_of_day), int(fmod(st.time_of_day, 1.0) * 60.0))
