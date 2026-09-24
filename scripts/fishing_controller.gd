@@ -1,10 +1,10 @@
 extends Node3D
-## Fishing: hold G (or B/Y on a VR controller) to preview a cast on water,
+## Fishing: hold G (or thumbstick click on a VR controller) to preview a cast on water,
 ## release to cast, press again when a fish bites.
 
 const FISH_KEY := KEY_G
 const KEY_LABEL := "G"
-const XR_BUTTON := "by_button"
+const XR_BUTTON := "primary_click"
 enum State { IDLE, AIMING, WAITING, BITE }
 
 var _ground: LowPolyGround

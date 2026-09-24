@@ -37,7 +37,7 @@ The hotbar and crafting hints are shown in the HUD; follow the on-screen prompts
 ## WebXR controls
 
 Movement, grabbing and interaction are described in [WEBXR.md](WEBXR.md).
-Fishing uses the **B / Y** button on a controller (hold to aim, release to cast, press on a bite).
+Fishing uses the **thumbstick click** on a controller (hold to aim, release to cast, press on a bite).
 Bridge building uses the **grip** (hold to preview, release to build).
 
 ## Survival loop
