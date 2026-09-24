@@ -8,16 +8,17 @@ const DAY_LENGTH_SECONDS := 1200.0
 var inventory: Dictionary = {
 	"axe": 1, "pickaxe": 1, "hammer": 1, "farm_bed": 0, "gate": 0,
 	"wood": 8, "stone": 0, "sticks": 0, "berries": 1, "mushroom": 0,
-	"vegetables": 0, "cooked_food": 0, "seeds": 4, "sapling": 0
+	"vegetables": 0, "cooked_food": 0, "seeds": 4, "sapling": 0, "fishing_rod": 0, "raw_fish": 0, "cooked_fish": 0
 }
-var tool_durability: Dictionary = {"axe": 60, "pickaxe": 70, "hammer": 100}
-const TOOL_MAX_DURABILITY := {"axe": 60, "pickaxe": 70, "hammer": 100}
+var tool_durability: Dictionary = {"axe": 60, "pickaxe": 70, "hammer": 100, "fishing_rod": 40}
+const TOOL_MAX_DURABILITY := {"axe": 60, "pickaxe": 70, "hammer": 100, "fishing_rod": 40}
 const RECIPES := {
 	"hammer": {"ingredients": {"wood": 3, "sticks": 2}, "amount": 1, "label": "Building hammer"},
 	"axe": {"ingredients": {"wood": 5, "stone": 3}, "amount": 1, "label": "Stone axe"},
 	"pickaxe": {"ingredients": {"wood": 4, "stone": 6}, "amount": 1, "label": "Stone pickaxe"},
 	"farm_bed": {"ingredients": {"wood": 6, "stone": 2}, "amount": 1, "label": "Farm bed"},
-	"gate": {"ingredients": {"wood": 8, "stone": 2}, "amount": 1, "label": "Wooden gate"}
+	"gate": {"ingredients": {"wood": 8, "stone": 2}, "amount": 1, "label": "Wooden gate"},
+	"fishing_rod": {"ingredients": {"wood": 2, "sticks": 3}, "amount": 1, "label": "Fishing rod"}
 }
 var health:=100.0; var hunger:=82.0; var warmth:=78.0; var stamina:=100.0
 var day:=1; var time_of_day:=7.5; var _accum:=0.0; var _indoors:=false; var _heat:=0.0; var _wet:=false; var _cooldowns:={}
@@ -111,12 +112,14 @@ func recipe_text(item: String) -> String:
 	return "  •  ".join(parts)
 
 func eat_item(item: String) -> bool:
-	var nutrition := {"berries": 13.0, "mushroom": 10.0, "vegetables": 24.0, "cooked_food": 45.0}
+	var nutrition := {"berries": 13.0, "mushroom": 10.0, "vegetables": 24.0, "cooked_food": 45.0, "raw_fish": 6.0, "cooked_fish": 32.0}
 	var messages := {
 		"berries": "You eat a handful of tart berries.",
 		"mushroom": "You eat the wild mushrooms.",
 		"vegetables": "You eat fresh vegetables.",
-		"cooked_food": "A warm meal restores you."
+		"cooked_food": "A warm meal restores you.",
+		"raw_fish": "Raw fish. Not great, but it is food.",
+		"cooked_fish": "The fried fish is hot and filling."
 	}
 	if not nutrition.has(item):
 		notification.emit("This item is not edible.", Color(1.0, 0.55, 0.42))
@@ -128,14 +131,14 @@ func eat_item(item: String) -> bool:
 		notification.emit("You have none left.", Color(1.0, 0.55, 0.42))
 		return false
 	hunger = minf(100.0, hunger + float(nutrition[item]))
-	if item == "cooked_food":
+	if item == "cooked_food" or item == "cooked_fish":
 		warmth = minf(100.0, warmth + 12.0)
 	notification.emit(str(messages[item]), Color(1.0, 0.78, 0.42))
 	_emit_vitals()
 	return true
 
 func eat_best_food()->bool:
-	for item in ["cooked_food", "vegetables", "berries", "mushroom"]:
+	for item in ["cooked_food", "cooked_fish", "vegetables", "berries", "mushroom"]:
 		if has_item(item):
 			return eat_item(item)
 	notification.emit("You have no food.", Color(1.0, 0.55, 0.42))

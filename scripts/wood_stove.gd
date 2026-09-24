@@ -36,6 +36,8 @@ func get_interaction_text() -> String:
 	if not is_burning():
 		return wood_label
 	var food_label := "C  Cook (2 vegetables)" if SurvivalState.has_item("vegetables", 2) else "C  Need 2 vegetables"
+	if SurvivalState.has_item("raw_fish", 1):
+		food_label = "C  Fry fish (1 raw fish)"
 	return "%s    •    %s" % [wood_label, food_label]
 
 func interact(_player: Node) -> void:
@@ -50,6 +52,15 @@ func interact(_player: Node) -> void:
 func cook() -> void:
 	if not is_burning():
 		SurvivalState.notification.emit("Light the stove before cooking.", Color(1.0, 0.5, 0.35))
+	elif SurvivalState.remove_item("raw_fish", 1):
+		SurvivalState.add_item("cooked_fish", 1, "fried fish")
+		fuel_time = maxf(0.0, fuel_time - 6.0)
+		SurvivalState.notification.emit("The fish sizzles in the pan.", Color(1.0, 0.72, 0.35))
+		var sizzle := AudioStreamPlayer3D.new()
+		sizzle.stream = load("res://scripts/fishing_controller.gd").synth(900.0, 500.0, 1.1, 0.95, 0.3)
+		add_child(sizzle)
+		sizzle.finished.connect(sizzle.queue_free)
+		sizzle.play()
 	elif SurvivalState.remove_item("vegetables", 2):
 		SurvivalState.add_item("cooked_food", 1, "warm meal")
 		fuel_time = maxf(0.0, fuel_time - 12.0)

@@ -31,6 +31,7 @@
 [ext_resource type="Script" uid="uid://c5l38ssr8vq2p" path="res://scripts/living_world.gd" id="55_living"]
 [ext_resource type="Script" uid="uid://dcmngyw1xaqu0" path="res://scripts/volumetric_grass_field.gd" id="57_volgrass"]
 [ext_resource type="Script" path="res://scripts/world_landmarks.gd" id="landmarks_script"]
+[ext_resource type="Script" path="res://scripts/fishing_controller.gd" id="fishing_script"]
 
 [sub_resource type="ProceduralSkyMaterial" id="DaySkyMaterial"]
 sky_top_color = Color(0.24, 0.45, 0.71, 1)
@@ -151,4 +152,7 @@ script = ExtResource("100_weather")
 
 [node name="WorldLandmarks" type="Node3D" parent="."]
 script = ExtResource("landmarks_script")
+
+[node name="Fishing" type="Node3D" parent="."]
+script = ExtResource("fishing_script")
 
