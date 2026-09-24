@@ -123,12 +123,14 @@ func _add_face(v: PackedVector3Array,n: PackedVector3Array,c: PackedColorArray,i
 	var center:=(a+b+d)/3.0; var color:=_face_color(Vector2(center.x,center.z),x,z,t,normal.y); var start:=v.size()
 	v.append(a);v.append(b);v.append(d);n.append(normal);n.append(normal);n.append(normal);c.append(color);c.append(color);c.append(color);idx.append(start);idx.append(start+1);idx.append(start+2)
 
-const LAKE_CENTER := Vector2(44.0, 40.0)
+# Lake sits about 24 m from the cabin (cabin centre ~ (0, -4)); shore faces the porch side.
+const LAKE_CENTER := Vector2(28.0, 20.0)
 const LAKE_RADIUS := 13.0
 const LAKE_LEVEL := -2.25
 const RIVER_SOURCE_LEVEL := 2.4
 const RIVER_HALF_WIDTH := 2.6
-const RIVER_CONTROL := [Vector2(-98, 34), Vector2(-78, 46), Vector2(-58, 39), Vector2(-40, 52), Vector2(-21, 60), Vector2(-2, 57), Vector2(16, 64), Vector2(31, 55), Vector2(42, 43)]
+# River comes down from the north-east hills and flows into the lake.
+const RIVER_CONTROL := [Vector2(98, -58), Vector2(82, -47), Vector2(68, -30), Vector2(59, -12), Vector2(49, 2), Vector2(39, 11), Vector2(30, 18)]
 var _river_pts := PackedVector2Array()
 var _river_acc := PackedFloat32Array()
 var _river_min := Vector2.ZERO
