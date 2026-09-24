@@ -38,7 +38,7 @@ The hotbar and crafting hints are shown in the HUD; follow the on-screen prompts
 
 Movement, grabbing and interaction are described in [WEBXR.md](WEBXR.md).
 Fishing uses the **B / Y** button on a controller (hold to aim, release to cast, press on a bite).
-Bridge building is currently desktop-only.
+Bridge building uses the **grip** (hold to preview, release to build).
 
 ## Survival loop
 
@@ -91,7 +91,7 @@ disables shadows on small decor after the world is generated.
 ## Known limitations
 
 - The hotbar has 12 fixed slots, so the fishing rod and fish are not shown there (fishing works when the rod is in the inventory; fried fish is eaten with the eat key).
-- Bridge sections cannot be removed and cannot be built in WebXR yet.
+- Bridge sections cannot be removed.
 - Trails never regrow.
 - Forest decor is not merged into MultiMesh yet (the optimizer finds no batchable instances in the imported models); trees rely on visibility ranges instead of mesh LOD.
 - Fishing, bridges, trails and landmarks were verified only by headless runs, not by a full playtest in VR.

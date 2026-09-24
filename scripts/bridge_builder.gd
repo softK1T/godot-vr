@@ -22,6 +22,10 @@ var _wood_dark := _mat(Color(0.37, 0.27, 0.18))
 var _ok_mat := _preview_mat(Color(0.6, 0.72, 0.55))
 var _bad_mat := _preview_mat(Color(0.76, 0.46, 0.38))
 var _sfx: AudioStreamPlayer3D
+const XR_BUTTON := "grip_click"
+var _xr_held := false
+var _xr_scan := 0.0
+var _connected: Array = []
 
 
 func _ready() -> void:
@@ -70,6 +74,7 @@ func _hint(key: String, text: String) -> void:
 
 
 func _process(delta: float) -> void:
+	_scan_xr(delta)
 	for k in _hint_cd.keys():
 		_hint_cd[k] = maxf(0.0, float(_hint_cd[k]) - delta)
 	if _ground == null or get_tree().paused:
@@ -77,7 +82,7 @@ func _process(delta: float) -> void:
 	var cam := get_viewport().get_camera_3d()
 	if cam == null:
 		return
-	var held := Input.is_physical_key_pressed(BUILD_KEY)
+	var held := _xr_held or Input.is_physical_key_pressed(BUILD_KEY)
 	if held:
 		if not SurvivalState.has_item("hammer"):
 			_hint("hammer", "You need a hammer to build a bridge.")
@@ -254,3 +259,21 @@ func _load() -> void:
 			var entry := {"x": float(e["x"]), "y": float(e["y"]), "z": float(e["z"]), "yaw": float(e["yaw"])}
 			_sections.append(entry)
 			_make_section(entry, false)
+
+
+func _scan_xr(delta: float) -> void:
+	_xr_scan -= delta
+	if _xr_scan > 0.0:
+		return
+	_xr_scan = 1.0
+	for c in get_tree().root.find_children("*", "XRController3D", true, false):
+		if c in _connected:
+			continue
+		_connected.append(c)
+		c.button_pressed.connect(_on_xr_button.bind(true))
+		c.button_released.connect(_on_xr_button.bind(false))
+
+
+func _on_xr_button(button_name: String, down: bool) -> void:
+	if button_name == XR_BUTTON:
+		_xr_held = down
