@@ -394,4 +394,9 @@ func new_game() -> void:
 	_ready_done = false
 	if SurvivalState.has_meta("defaults"):
 		_apply_state(SurvivalState.get_meta("defaults"))
+	# Player-made world extras live in their own files.
+	Engine.set_meta("trails_reset", true)
+	for extra in ["user://bridges.json", "user://trails.json"]:
+		if FileAccess.file_exists(extra):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(extra))
 	get_tree().reload_current_scene()

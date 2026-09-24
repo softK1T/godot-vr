@@ -19,6 +19,15 @@ func _ready() -> void:
 	var multimeshes := 0
 	var generators: Array[Node] = []
 	_find_by_script(root, "forest_generator.gd", generators)
+	if generators.is_empty():
+		print("WorldOptimizer: no forest_generator node in the scene")
+	for gen in generators:
+		var total := gen.find_children("*", "MeshInstance3D", true, false)
+		var ok := 0
+		for m in total:
+			if _batchable(m as MeshInstance3D, gen):
+				ok += 1
+		print("WorldOptimizer: %s has %d mesh instances, %d batchable" % [gen.name, total.size(), ok])
 	for gen in generators:
 		var r := _batch_subtree(gen)
 		batched += r.x

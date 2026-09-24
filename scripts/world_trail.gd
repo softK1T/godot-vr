@@ -234,6 +234,8 @@ var _grass_scan := 0.0
 func _wear_start() -> void:
 	if Engine.is_editor_hint():
 		return
+	if Engine.has_meta("trails_reset"):
+		Engine.remove_meta("trails_reset")
 	await get_tree().process_frame
 	_wear_ground = get_node_or_null("../Ground")
 	if _wear_ground == null and get_tree().current_scene:
@@ -310,7 +312,7 @@ func _process(delta: float) -> void:
 func _notification(what: int) -> void:
 	if Engine.is_editor_hint():
 		return
-	if (what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_EXIT_TREE) and _wear_dirty:
+	if (what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_EXIT_TREE) and _wear_dirty and not Engine.has_meta("trails_reset"):
 		_wear_save()
 
 

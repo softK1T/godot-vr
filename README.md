@@ -75,7 +75,7 @@ Sections can only be placed over water, snap to the end of an existing bridge an
 - The main save (`save_system.gd`) is written atomically (temp file + rename) with a `.bak` backup; if the JSON is
   corrupted the backup is loaded. Procedural objects are tracked by generation index, built objects by unique IDs.
 - Bridges are stored in `user://bridges.json`, player trails in `user://trails.json` (both written atomically).
-- Hold Shift + F8 for 2 seconds to start a new game.
+- Hold Shift + F8 for 2 seconds to start a new game (this also clears bridges and trails).
 
 ## Landmarks
 
@@ -91,7 +91,6 @@ disables shadows on small decor after the world is generated.
 ## Known limitations
 
 - The hotbar has 12 fixed slots, so the fishing rod and fish are not shown there (fishing works when the rod is in the inventory; fried fish is eaten with the eat key).
-- New game (Shift + F8) does not yet clear bridges and trails; delete `user://bridges.json` and `user://trails.json` manually.
 - Bridge sections cannot be removed and cannot be built in WebXR yet.
 - Trails never regrow.
 - Forest decor is not merged into MultiMesh yet (the optimizer finds no batchable instances in the imported models); trees rely on visibility ranges instead of mesh LOD.
