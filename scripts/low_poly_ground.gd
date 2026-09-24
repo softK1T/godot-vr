@@ -301,5 +301,8 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_EDITOR_PRE_SAVE:
 		if is_instance_valid(mesh_instance):
 			mesh_instance.mesh = null
+		var col := get_node_or_null("Collision") as CollisionShape3D
+		if col:
+			col.shape = null
 	elif what == NOTIFICATION_EDITOR_POST_SAVE:
 		build()
